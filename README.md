@@ -29,7 +29,7 @@ This tool scrapes the names of chats that have had messages forwarded into your 
 
 _archiver.py_
 
-This tool archives the entirety of the chats you specify in _to_archive.csv_ (this must have only one column with "To" as the header). For the tool to work, the chat has to either be public, or your Telegram account needs to be a member. The tool can also be set to run on a cron job to regularly archive target chats. Please use responsibly.
+This tool archives the entirety of the chats you specify in _to_archive.csv_ (this must have only one column with "To" as the header). Messages are archives in both .CSV and .JSON formats and media content (photos, videos and documents) is saved to the directory Telepathy is installed in. For the tool to work, the chat has to either be public, or your Telegram account needs to be a member. The tool can also be set to run on a cron job to regularly archive target chats. Please use responsibly.
 
 ## Feedback
 
