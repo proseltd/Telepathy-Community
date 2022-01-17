@@ -36,7 +36,7 @@ You may use Telepathy however you like, however how you use the tool is your res
 
 ## Credits
 
-All tools created by Jordan Wildon (@[jordanwildon][2]) with some suggestions, imporvements and bug-busting contributed by Alex Newhouse (@[AlexBNewhouse][3]).
+All tools created by Jordan Wildon (@[jordanwildon][2]) with some suggestions, improvements and bug-busting contributed by Alex Newhouse (@[AlexBNewhouse][3]).
 
 Where possible, credit for the use of this tool in published research is desired, but not required.
 
