@@ -37,7 +37,7 @@ Please send feedback to @[jordanwildon][2] on Twitter
 
 ## Usage terms
 
-You may use Telepathy however you like, however how you use the tool is your responsibility. Be safe and respectful.
+You may use Telepathy however you like, but your usecase is your responsibility. Be safe and respectful.
 
 ## Credits
 
