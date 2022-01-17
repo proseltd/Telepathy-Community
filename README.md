@@ -31,6 +31,13 @@ _archiver.py_
 
 This tool archives the entirety of the chats you specify in _to_archive.csv_ (this must have only one column with "To" as the header). Messages are archives in both .CSV and .JSON formats and media content (photos, videos and documents) is saved to the directory Telepathy is installed in. For the tool to work, the chat has to either be public, or your Telegram account needs to be a member. The tool can also be set to run on a cron job to regularly archive target chats. Please use responsibly.
 
+Tip: Comment out the three lines of code below to skip archiving of media content.
+
+```#if message.media:
+  #path = await message.download_media()
+  #print('File saved to', path)
+```
+
 ## Feedback
 
 Please send feedback to @[jordanwildon][2] on Twitter
