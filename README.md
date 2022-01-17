@@ -28,7 +28,7 @@ This tool scrapes the names of chats that have had messages forwarded into your 
 
 ## Feedback
 
-Please send all feedback either to (@[jordanwildon][2]) on Twitter
+Please send feedback to @[jordanwildon][2] on Twitter
 
 ## Usage terms
 
