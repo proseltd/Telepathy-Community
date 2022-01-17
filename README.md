@@ -23,8 +23,13 @@ python3 setup.py
 
 Upon installation completion, you will be able to launch forwards.py. On first use, it will ask you for an authorization code that will be sent to your Telegram account.
 
-_The Telegram forwards scraper_
+_forwards.py_
+
 This tool scrapes the names of chats that have had messages forwarded into your target groups and automatically save these in an edgelist named _edgelist.csv_. It can then scrape forwards from all the discovered channels for a larger network map, which is saved as _net.csv_. This second feature takes a long time to run, but is worthwhile for a broader analysis. This edglist can then be used with software such as Gephi to visualize the network you have discovered.
+
+_archiver.py_
+
+This tool archives the entirety of the chats you specify in _to_archive.csv_ (this must have only one column with "To" as the header). For the tool to work, the chat has to either be public, or your Telegram account needs to be a member. The tool can also be set to run on a cron job to regularly archive target chats. Please use responsibly.
 
 ## Feedback
 
