@@ -51,10 +51,4 @@ fin1.close()
 fout1.close()
 
 print('Setup is complete.')
-
-launcher = input('Do you want to open the launcher? (y/n)')
-if launcher == 'y':
-    print('Starting...')
-    exec(open("launcher.py").read())
-else:
-    print('The launcher is now ready and can be started with the launcher.py file. You may now close the terminal.')
+print('Telepathy is now ready and can be used. You may now close the terminal.')
