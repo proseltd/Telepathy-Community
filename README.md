@@ -2,9 +2,6 @@
 
 Welcome to Telepathy, an OSINT toolkit for scraping Telegram data to help investigate shady goings on.
 
-To do
--- create requirements.txt
-
 ## Installation
 
 1. Install from source
