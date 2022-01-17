@@ -6,7 +6,7 @@ Welcome to Telepathy, an OSINT toolkit for scraping Telegram data to help invest
 
 1. Install from source
 
-```bash
+```
 git clone https://github.com/jordanwildon/Telepathy.git
 pip install -r requirements.txt
 ```
@@ -15,7 +15,7 @@ pip install -r requirements.txt
 
 3. Navigate to the installation directory and run setup.py, this will walk you through the Telegram API login and prepare the toolkit with your details.
 
-```bash
+```
 python3 setup.py
 ```
 
@@ -33,9 +33,10 @@ This tool archives the entirety of the chats you specify in _to_archive.csv_ (th
 
 Tip: Comment out the three lines of code below to skip archiving of media content.
 
-```if message.media:
-  path = await message.download_media()
-  print('File saved to', path)
+```
+#if message.media:
+#  path = await message.download_media()
+#  print('File saved to', path)
 ```
 
 ## Feedback
