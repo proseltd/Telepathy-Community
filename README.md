@@ -33,9 +33,9 @@ This tool archives the entirety of the chats you specify in _to_archive.csv_ (th
 
 Tip: Comment out the three lines of code below to skip archiving of media content.
 
-```#if message.media:
-  #path = await message.download_media()
-  #print('File saved to', path)
+```if message.media:
+  path = await message.download_media()
+  print('File saved to', path)
 ```
 
 ## Feedback
