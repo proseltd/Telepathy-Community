@@ -25,6 +25,7 @@ python3 setup.py
 Upon installation completion, you will be able to launch telepathy.py. On first use of any of the modules, Telepathy will ask you for an authorization code that will be sent to your Telegram account.
 
 _telepathy.py_
+
 A launcher to select which module you would like to use.
 
 _archiver.py_
