@@ -8,6 +8,7 @@ Welcome to Telepathy, an OSINT toolkit for scraping Telegram data to help invest
 
 ```
 git clone https://github.com/jordanwildon/Telepathy.git
+cd Telepathy
 pip install -r requirements.txt
 ```
 
