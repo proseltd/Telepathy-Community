@@ -1,6 +1,6 @@
 # Telepathy
 
-Welcome to Telepathy, an OSINT toolkit for scraping Telegram data to help investigate shady goings on. Currently, the tool is limited to scraping only the sources of forwarded messages. Its capabilities will be increased over time.
+Welcome to Telepathy, an OSINT toolkit for scraping Telegram data to help investigate shady goings on.
 
 ## Installation
 
@@ -22,17 +22,16 @@ python3 setup.py
 
 ## Usage
 
-Upon installation completion, you will be able to launch forwards.py. On first use, it will ask you for an authorization code that will be sent to your Telegram account.
+Upon installation completion, you will be able to launch telepathy.py. On first use of any of the modules, Telepathy will ask you for an authorization code that will be sent to your Telegram account.
 
-_forwards.py_
-
-This tool scrapes the names of chats that have had messages forwarded into your target groups and automatically save these in an edgelist named _edgelist.csv_. It can then scrape forwards from all the discovered channels for a larger network map, which is saved as _net.csv_. This second feature takes a long time to run, but is worthwhile for a broader analysis. This edglist can then be used with software such as Gephi to visualize the network you have discovered.
+_telepathy.py_
+A launcher to select which module you would like to use.
 
 _archiver.py_
 
-This tool archives the entirety of the chats you specify in _to_archive.csv_ (this must have only one column with "To" as the header). Messages are archives in both .CSV and .JSON formats and media content (photos, videos and documents) is saved to the directory Telepathy is installed in. For the tool to work, the chat has to either be public, or your Telegram account needs to be a member. The tool can also be set to run on a cron job to regularly archive target chats. Please use responsibly.
+This module batch archives the entirety of the chats you specify in _to_archive.csv_ (this must have only one column with "To" as the header). Messages are archives in both .CSV and .JSON formats and media content (photos, videos and documents) is saved to the directory Telepathy is installed in. For the module to work, the chat has to either be public, or your Telegram account needs to be a member. The module can also be set to run on a cron job to regularly archive target chats. Please use responsibly.
 
-Tip: Comment out the three lines of code below to skip archiving of media content.
+Tip: Comment out the three lines of code below to skip archiving of media content. Uncomment line 82 and/or 87 to show messages in the terminal and/or directory of saved media.
 
 ```
 #if message.media:
@@ -40,9 +39,24 @@ Tip: Comment out the three lines of code below to skip archiving of media conten
 #  print('File saved to', path)
 ```
 
+_members.py_
+
+This module scrapes the memberlist of a group your Telegram account is a member of. This works best with aged accounts and once the Telegram client has 'seen' members before. The module will still operate without these conditions, but 'invisible' members might not be saved to the memberlist.
+
+_forwards.py_
+
+This module scrapes the names of chats that have had messages forwarded into your target groups and automatically save these in an edgelist named _edgelist.csv_. It can then scrape forwards from all the discovered channels for a larger network map, which is saved as _net.csv_. This second feature takes a long time to run, but is worthwhile for a broader analysis. This edglist can then be used with software such as Gephi to visualize the network you have discovered.
+
+Tip: Forwards module runs silently by defaut, uncomment line 30 and 91 to print source and target of forwarded messages.
+
+
+## A note on how Telegram works
+
+Telegram chats are organised into two key types: channels and megagroups/supergroups [2]. Each module works slightly differently depending on the chat type. For example, subscribers of Channels can't be scraped with the _members.py_ module. Channels can have seemingly unlimited subscribers, megagroups can have up to 200,000 members and groups can only have 
+
 ## Feedback
 
-Please send feedback to @[jordanwildon][2] on Twitter
+Please send feedback to @[jordanwildon][3] on Twitter
 
 ## Usage terms
 
@@ -50,10 +64,11 @@ You may use Telepathy however you like, but your usecase is your responsibility.
 
 ## Credits
 
-All tools created by Jordan Wildon (@[jordanwildon][2]) with some suggestions, improvements and bug-busting contributed by Alex Newhouse (@[AlexBNewhouse][3]).
+All tools created by Jordan Wildon (@[jordanwildon][3]) with some suggestions, improvements and bug-busting contributed by Alex Newhouse (@[AlexBNewhouse][4]).
 
 Where possible, credit for the use of this tool in published research is desired, but not required.
 
 [1]: <https://my.telegram.org/auth?to=apps> "Telegram API"
-[2]: <https://www.twitter.com/jordanwildon> "@jordanwildon"
-[3]: <https://www.twitter.com/AlexBNewhouse> "@AlexBNewhouse"
+[2]: <https://core.telegram.org/api/channel> "Telegram chat types"
+[3]: <https://www.twitter.com/jordanwildon> "@jordanwildon"
+[4]: <https://www.twitter.com/AlexBNewhouse> "@AlexBNewhouse"
