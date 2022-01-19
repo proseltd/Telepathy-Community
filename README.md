@@ -52,7 +52,7 @@ Tip: Forwards module runs silently by defaut, uncomment line 30 and 91 to print 
 
 ## A note on how Telegram works
 
-Telegram chats are organised into two key types: channels and megagroups/supergroups [2]. Each module works slightly differently depending on the chat type. For example, subscribers of Channels can't be scraped with the _members.py_ module. Channels can have seemingly unlimited subscribers, megagroups can have up to 200,000 members and groups can only have 
+Telegram chats are organised into two [key types][2]: channels and megagroups/supergroups. Each module works slightly differently depending on the chat type. For example, subscribers of Channels can't be scraped with the _members.py_ module. Channels can have seemingly unlimited subscribers, megagroups can have up to 200,000 members and groups can only have 
 
 ## Feedback
 
