@@ -116,7 +116,7 @@ if next1 == 'y':
                         #print("An exception occurred: Could be private, now deleted, or a group.")
                         pass
 
-            print("# Scrape complete for:", i,)
+            print("Scrape complete for:", i,)
         df.to_json(alphanumeric + '_archive.json', orient = 'split', compression = 'infer', index = 'true')
 
     with client:
