@@ -71,7 +71,7 @@ async def main():
 
                 file = directory + '/'+ alphanumeric + '_archive.csv'
 
-                with open(file, 'r+') as f:
+                with open(file, 'w+') as f:
                     df.to_csv(f, header=False)
 
                 name = get_display_name(message.sender)

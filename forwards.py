@@ -23,7 +23,7 @@ while True:
         print(f'You entered "{channel_name}"')
         answer = input('Is this correct? (y/n)')
         if answer == 'y':
-            print('Scraping forwards from', channel_name, '...')
+            print('Scraping forwards from', channel_name, 'This may take a while...')
             break;
     except:
             continue
@@ -37,7 +37,7 @@ async def main():
                 id = message.forward.original_fwd.from_id
                 if id is not None:
                     ent = await client.get_entity(id)
-                    print(ent.title,">>>",channel_name)
+                    #print(ent.title,">>>",channel_name)
                     df = pd.DataFrame(l, columns = ['To','From'])
 
                     name_clean = channel_name
@@ -55,13 +55,14 @@ async def main():
 
                     file = './edgelists/'+ alphanumeric + '_edgelist.csv'
 
-                    with open(file,'r+') as f:
+                    with open(file,'w+') as f:
                         df.to_csv(f)
 
                     l.append([channel_name, ent.title])
 
             except:
-              print("An exception occurred: Could be private, now deleted, or a group.")
+              #print("An exception occurred: Could be private, now deleted, or a group.")
+              pass
 
 with client:
     client.loop.run_until_complete(main())
@@ -88,7 +89,7 @@ if next1 == 'y':
                         id = message.forward.original_fwd.from_id
                         if id is not None:
                             ent = await client.get_entity(id)
-                            print(ent.title,">>>",i)
+                            #print(ent.title,">>>",i)
 
                             df = pd.DataFrame(l, columns = ['To','From'])
 
@@ -107,12 +108,14 @@ if next1 == 'y':
 
                             file1 = './edgelists/'+ alphanumeric + '_net.csv'
 
-                            with open(file1,'r+') as f:
+                            with open(file1,'w+') as f:
                                 df.to_csv(f)
 
                             l.append([i, ent.title])
                     except:
-                        print("An exception occurred: Could be private, now deleted, or a group.")
+                        #print("An exception occurred: Could be private, now deleted, or a group.")
+                        pass
+
             print("# # # # # # # # # # Scrape complete for:", i, "# # # # # # # # # #")
         df.to_json(alphanumeric + '_archive.json', orient = 'split', compression = 'infer', index = 'true')
 
