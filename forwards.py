@@ -37,8 +37,10 @@ async def main():
                 id = message.forward.original_fwd.from_id
                 if id is not None:
                     ent = await client.get_entity(id)
+                    date = str(message.date.year) + "/" + str(message.date.month) + "/" + str(message.date.day)
+                    time = str(message.date.hour) + ":" + str(message.date.minute)
                     #print(ent.title,">>>",channel_name)
-                    df = pd.DataFrame(l, columns = ['To','From'])
+                    df = pd.DataFrame(l, columns = ['To','From','date','time'])
 
                     name_clean = channel_name
                     alphanumeric = ""
@@ -58,7 +60,7 @@ async def main():
                     with open(file,'w+') as f:
                         df.to_csv(f)
 
-                    l.append([channel_name, ent.title])
+                    l.append([channel_name, ent.title, date, time])
 
             except:
               #print("An exception occurred: Could be private, now deleted, or a group.")
@@ -89,9 +91,11 @@ if next1 == 'y':
                         id = message.forward.original_fwd.from_id
                         if id is not None:
                             ent = await client.get_entity(id)
+                            date = str(message.date.year) + "/" + str(message.date.month) + "/" + str(message.date.day)
+                            time = str(message.date.hour) + ":" + str(message.date.minute)
                             #print(ent.title,">>>",i)
 
-                            df = pd.DataFrame(l, columns = ['To','From'])
+                            df = pd.DataFrame(l, columns = ['To','From','date','time'])
 
                             name_clean = channel_name
                             alphanumeric = ""
@@ -111,7 +115,7 @@ if next1 == 'y':
                             with open(file1,'w+') as f:
                                 df.to_csv(f)
 
-                            l.append([i, ent.title])
+                            l.append([i, ent.title, date, time])
                     except:
                         #print("An exception occurred: Could be private, now deleted, or a group.")
                         pass
