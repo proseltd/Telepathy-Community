@@ -30,7 +30,11 @@ A launcher to select which module you would like to use.
 
 _archiver.py_
 
-This module batch archives the entirety of the chats you specify in _to_archive.csv_ (this must have only one column with "To" as the header). Messages are archives in both .CSV and .JSON formats and media content (photos, videos and documents) is saved to the directory Telepathy is installed in. For the module to work, the chat has to either be public, or your Telegram account needs to be a member. The module can also be set to run on a cron job to regularly archive target chats. Please use responsibly.
+This module batch archives the entirety of the chats you specify in _to_archive.csv_ (this filename must be exactly correct and have only one column with "To" as the header). A chat name is everything after t.me/ in the chat's sharelink or the @name as seen in chats.
+
+<img width="494" alt="chatname" src="https://user-images.githubusercontent.com/88871159/151660067-160848bc-7e4e-487c-94c5-4985fe639892.png">
+
+Messages saved by archiver.py are archived in both .CSV and .JSON formats and media content (photos, videos and documents) is saved to the directory Telepathy is installed in. For the module to work, the chat has to either be public, or your Telegram account needs to be a member. The module can also be set to run on a cron job to regularly archive target chats. Please use responsibly.
 
 Tip: Comment out the three lines of code below to skip archiving of media content. Uncomment line 82 and/or 87 to show messages in the terminal and/or directory of saved media.
 
