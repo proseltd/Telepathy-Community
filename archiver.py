@@ -99,8 +99,14 @@ async def main():
 
                 name = get_display_name(message.sender)
                 nameID = message.from_id
-                date = str(message.date.year) + "/" + str(message.date.month) + "/" + str(message.date.day)
-                time = str(message.date.hour) + ":" + str(message.date.minute)
+                year = format(message.date.year, '02d')
+                month = format(message.date.month, '02d')
+                day = format(message.date.day, '02d')
+                hour = format(message.date.hour, '02d')
+                minute = format(message.date.minute, '02d')
+
+                date = str(year) + "/" + str(month) + "/" + str(day)
+                time = str(hour) + ":" + str(minute)
 
                 if user_selection_log == 'y':
                     print(message.id,' ',name,':',message.text,date,time)
