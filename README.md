@@ -64,6 +64,7 @@ Upcoming features include:
   - Expanding the time specifications for the archive module to include be able to set a specific period (including end date).
   - Giving the archiver module the ability to archive comments on channel posts.
   - An activity analysis module that will calculate most active users in a group based on frequency of posts.
+  - May intagrate location analysis tools.
 
 ## Feedback
 
