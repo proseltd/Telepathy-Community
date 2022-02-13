@@ -36,13 +36,9 @@ This module batch archives the entirety of the chats you specify in _to_archive.
 
 Messages saved by archiver.py are archived in both .CSV and .JSON formats and media content (photos, videos and documents) is saved to the directory Telepathy is installed in. For the module to work, the chat has to either be public, or your Telegram account needs to be a member. The module can also be set to run on a cron job to regularly archive target chats. Please use responsibly.
 
-Tip: Comment out the three lines of code below to skip archiving of media content. Uncomment line 82 and/or 87 to show messages in the terminal and/or directory of saved media.
+The 1.1 version of the module includes the ability to toggle media archiving, printing messages to the terminal, and archiving messages only after a specific date. Telepathy now manages files in a more organized manner.
 
-```
-#if message.media:
-#  path = await message.download_media()
-#  print('File saved to', path)
-```
+<img width="702" alt="Screenshot 2022-02-13 at 14 39 05" src="https://user-images.githubusercontent.com/88871159/153755736-e89deba0-34c8-4865-a9a3-cfa04489bc6b.png">
 
 _members.py_
 
@@ -52,12 +48,22 @@ _forwards.py_
 
 This module scrapes the names of chats that have had messages forwarded into your target groups and automatically save these in an edgelist named _edgelist.csv_. It can then scrape forwards from all the discovered channels for a larger network map, which is saved as _net.csv_. This second feature takes a long time to run, but is worthwhile for a broader analysis. This edglist can then be used with software such as Gephi to visualize the network you have discovered.
 
-Tip: Forwards module runs silently by defaut, uncomment line 30 and 91 to print source and target of forwarded messages.
+_userlookup.py_
 
+This module gives the user the ability to input a Telegram user ID and lookup basic information about the associated account.
 
 ## A note on how Telegram works
 
 Telegram chats are organised into two [key types][2]: channels and megagroups/supergroups. Each module works slightly differently depending on the chat type. For example, subscribers of Channels can't be scraped with the _members.py_ module. Channels can have seemingly unlimited subscribers, megagroups can have up to 200,000 members.
+
+## Upcoming changes
+Telepathy is still in the development stage with this version serving as an early release. Some bugs may still be present and some features are yet to be added. In some environments (particularly Window), Telepathy struggles to effectively manage files and can sometimes produce errors. Fixes for these errors should come soon. 
+
+Upcoming features include:
+  - Adding message views to the archiver module.
+  - Expanding the time specifications for the archive module to include be able to set a specific period (including end date).
+  - Giving the archiver module the ability to archive comments on channel posts.
+  - An activity analysis module that will calculate most active users in a group based on frequency of posts.
 
 ## Feedback
 
