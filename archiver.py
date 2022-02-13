@@ -1,20 +1,29 @@
-#Imports
-from telethon.sync import TelegramClient
+#!/usr/bin/env python
+
+"""Telepathy archiving module:
+    A tool for archiving Telegram chats within specific parameters.
+"""
+
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.types import InputPeerEmpty
 from telethon.utils import get_display_name
-import pandas as pd
+from telethon.sync import TelegramClient
 import details as ds
-import csv
-import os
+import pandas as pd
+import datetime, csv, os
 
-#Login details
+__author__ = "Jordan Wildon (@jordanwildon)"
+__license__ = "MIT License"
+__version__ = "1.0.1"
+__maintainer__ = "Jordan Wildon"
+__email__ = "j.wildon@pm.me"
+__status__ = "Development"
+
 api_id = ds.apiID
 api_hash = ds.apiHash
 phone = ds.number
 client = TelegramClient(phone, api_id, api_hash)
 
-#Check authorisation
 client.connect()
 if not client.is_user_authorized():
     client.send_code_request(phone)
@@ -24,6 +33,9 @@ chats = []
 last_date = None
 chunk_size = 200
 groups=[]
+
+filetime = datetime.datetime.now().strftime("%Y_%m_%d-%H_%M")
+filetime_clean = str(filetime)
 
 result = client(GetDialogsRequest(
              offset_date=last_date,
@@ -37,12 +49,21 @@ chats.extend(result.chats)
 for chat in chats:
     groups.append(chat)
 
+print('Welcome to the Telepathy archiving tool. This tool will archive Telegram chats based on a list.')
+user_selection_log = input('Do you want to print messages to terminal while Telepathy runs? (y/n)')
+user_selection_media = input('Do you want to archive media content? (y/n)')
+user_selection_date = input('Got it. Do you want to archive messages within a specific timeframe? (y/n)')
+if user_selection_date == 'y':
+    from_year = input('Please specify the start date (Year YYYY)')
+    from_month = input('Please specify the start date (Month, without leading 0 - MM)')
+    from_day = input('Please specify the start date (Day, without leading 0 - DD)')
+else:
+    pass
+
 print('Archiving chats...')
 
-#to_archive.csv to be replaced with your list of channels, must have "To" as a column header#
-
 async def main():
-    df = pd.read_csv('to_archive.csv')
+    df = pd.read_csv('to_archive.csv', sep=';')
     df = df.To.unique()
 
     for i in df:
@@ -57,19 +78,21 @@ async def main():
                     if character.isalnum():
                         alphanumeric += character
                 directory = './' + alphanumeric
+
                 try:
                     os.makedirs(directory)
                 except FileExistsError:
                     pass
                 media_directory = directory + '/media'
+
                 try:
                     os.makedirs(media_directory)
                 except FileExistsError:
                     pass
 
-                df = pd.DataFrame(l, columns = ['Chat name','message ID','Name','ID','Message text','Message date and time (YYYY/MM/DD, HH:MM)'])
+                df = pd.DataFrame(l, columns = ['Chat name','message ID','Name','ID','Message text','Message date (YYYY/MM/DD)','Message time (HH:MM)'])
 
-                file = directory + '/'+ alphanumeric + '_archive.csv'
+                file = directory + '/'+ alphanumeric + '_' + filetime_clean +'_archive.csv'
 
                 with open(file, 'w+') as f:
                     df.to_csv(f, header=False)
@@ -78,15 +101,37 @@ async def main():
                 nameID = message.from_id
                 date = str(message.date.year) + "/" + str(message.date.month) + "/" + str(message.date.day)
                 time = str(message.date.hour) + ":" + str(message.date.minute)
-                timestamp = date + ", " + time
-                #print(message.id,' ',name,':',message.text)
-                l.append([i,message.id,name,nameID,message.text,timestamp])
 
-                if message.media:
-                    path = await message.download_media(file=media_directory)
-                    #print('File saved to', path)
+                if user_selection_log == 'y':
+                    print(message.id,' ',name,':',message.text,date,time)
+                else:
+                    pass
 
-            df.to_json(directory + alphanumeric + '_archive.json', orient = 'split', compression = 'infer', index = 'true')
+                if user_selection_date == 'y':
+                    if (int(from_year) <= message.date.year and int(from_month) <= message.date.month and int(from_day) <= message.date.day):
+                        l.append([i,message.id,name,nameID,message.text,date,time])
+                    else:
+                        break
+                else:
+                    l.append([i,message.id,name,nameID,message.text,date,time])
+
+                if user_selection_media == 'y':
+                    if message.media:
+                        path = await message.download_media(file=media_directory)
+                        if user_selection_log == 'y':
+                            print('File saved to', path)
+                        else:
+                            pass
+                else:
+                    continue
+
+            jsons = './json_files'
+            try:
+                os.makedirs(jsons)
+            except FileExistsError:
+                pass
+
+            df.to_json(jsons+'/'+alphanumeric+'_archive.json',orient='split',compression='infer',index='true')
 
             print("Scrape completed for", i,", file saved")
 

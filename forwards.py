@@ -1,10 +1,22 @@
+#!/usr/bin/env python
+
+"""Telepathy forward scraping module:
+    A tool for creating an edgelist of forwarded messages.
+"""
+
 from telethon import TelegramClient
 from telethon import utils
 import pandas as pd
 import details as ds
 import os
 
-#Login details#
+__author__ = "Jordan Wildon (@jordanwildon)"
+__license__ = "MIT License"
+__version__ = "1.0.1"
+__maintainer__ = "Jordan Wildon"
+__email__ = "j.wildon@pm.me"
+__status__ = "Development"
+
 api_id = ds.apiID
 api_hash = ds.apiHash
 phone = ds.number
@@ -16,6 +28,7 @@ if not client.is_user_authorized():
     client.sign_in(phone, input('Enter the code: '))
 
 print('Welcome to channel forward scraper.\nThis tool will scrape a Telegram channel for all forwarded messages and their original sources.')
+user_selection_log = input('Do you want to print forwards to terminal while Telepathy runs? (y/n)')
 
 while True:
     try:
@@ -39,7 +52,10 @@ async def main():
                     ent = await client.get_entity(id)
                     date = str(message.date.year) + "/" + str(message.date.month) + "/" + str(message.date.day)
                     time = str(message.date.hour) + ":" + str(message.date.minute)
-                    #print(ent.title,">>>",channel_name)
+                    if user_selection_media == 'y':
+                        print(ent.title,">>>",channel_name)
+                    else:
+                        pass
                     df = pd.DataFrame(l, columns = ['To','From','date','time'])
 
                     name_clean = channel_name
@@ -63,8 +79,10 @@ async def main():
                     l.append([channel_name, ent.title, date, time])
 
             except:
-              #print("An exception occurred: Could be private, now deleted, or a group.")
-              pass
+                if user_selection_media == 'y':
+                    print("An exception occurred: Could be private, now deleted, or a group.")
+                else:
+                    pass
 
 with client:
     client.loop.run_until_complete(main())
@@ -93,7 +111,11 @@ if next1 == 'y':
                             ent = await client.get_entity(id)
                             date = str(message.date.year) + "/" + str(message.date.month) + "/" + str(message.date.day)
                             time = str(message.date.hour) + ":" + str(message.date.minute)
-                            #print(ent.title,">>>",i)
+
+                            if user_selection_media == 'y':
+                                print(ent.title,">>>",i)
+                            else:
+                                pass
 
                             df = pd.DataFrame(l, columns = ['To','From','date','time'])
 
@@ -117,8 +139,10 @@ if next1 == 'y':
 
                             l.append([i, ent.title, date, time])
                     except:
-                        #print("An exception occurred: Could be private, now deleted, or a group.")
-                        pass
+                        if user_selection_media == 'y':
+                            print("An exception occurred: Could be private, now deleted, or a group.")
+                        else:
+                            pass
 
             print("Scrape complete for:", i,)
         df.to_json(alphanumeric + '_archive.json', orient = 'split', compression = 'infer', index = 'true')

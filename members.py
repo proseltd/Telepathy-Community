@@ -1,8 +1,20 @@
+#!/usr/bin/env python
+
+"""Telepathy memberlist module:
+    A tool for gathering memberlists for a Telegram group.
+"""
+
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.types import InputPeerEmpty
 import details as ds
-import csv
-import os
+import csv, os
+
+__author__ = "Jordan Wildon (@jordanwildon)"
+__license__ = "MIT License"
+__version__ = "1.0.1"
+__maintainer__ = "Jordan Wildon"
+__email__ = "j.wildon@pm.me"
+__status__ = "Development"
 
 #Login details
 api_id = ds.apiID

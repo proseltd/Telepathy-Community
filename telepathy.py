@@ -1,10 +1,23 @@
+#!/usr/bin/env python
+
+"""Telepathy: A Telegram OSINT toolkit that allows you to archive chats,
+gather memberlists for groups, create edglists for forwarded messages and more.
+"""
+
 from telethon.sync import TelegramClient
 from telethon import TelegramClient
+
+__author__ = "Jordan Wildon (@jordanwildon)"
+__license__ = "MIT License"
+__version__ = "1.0.1"
+__maintainer__ = "Jordan Wildon"
+__email__ = "j.wildon@pm.me"
+__status__ = "Development"
 
 print('Welcome to Telepathy')
 print('Please select a function:')
 
-li = ['Batch chat archiver','Scrape group members','Scrape forwarded messages in a chat']
+li = ['Batch chat archiver','Scrape group members','Scrape forwarded messages in a chat','Lookup a user ID']
 
 def display(li):
     for idx, tables in enumerate(li):
@@ -31,3 +44,6 @@ elif choice == 'Scrape group members':
 elif choice == 'Scrape forwarded messages in a chat':
     print('Launching channel forward scraper...')
     exec(open("forwards.py").read())
+elif choice == 'Lookup a user ID':
+    print('Launching Telegram user lookup...')
+    exec(open("userlookup.py").read())
