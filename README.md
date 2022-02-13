@@ -52,6 +52,16 @@ _userlookup.py_
 
 This module gives the user the ability to input a Telegram user ID and lookup basic information about the associated account.
 
+## Advanced tools
+Telepathy installs with a user analysis tool that analyzes the post frequency of users based on archived chats. The tool works by gathering all CSV archives in the "./telepathy/advanced/analysis_dropbox" file. Simply drop a selection of group archives in this file and it will calculate the number of unique active posters and how often they have posted. If used in combination with specific date archiving, this can also work to calculate how many users were active within a certain timeframe——for example within the last week.
+
+Usage: 
+```
+python3 user_analysis.py > analysis.csv
+```
+
+nb. when a user joins a group, it is considered a post in the above analysis. This is a tiny bug with Telepathy and will eventually be fixed but has been currently left in as it's still considered a signal of activity.
+
 ## A note on how Telegram works
 
 Telegram chats are organised into two [key types][2]: channels and megagroups/supergroups. Each module works slightly differently depending on the chat type. For example, subscribers of Channels can't be scraped with the _members.py_ module. Channels can have seemingly unlimited subscribers, megagroups can have up to 200,000 members.
@@ -63,7 +73,6 @@ Upcoming features include:
   - Adding message views to the archiver module.
   - Expanding the time specifications for the archive module to include be able to set a specific period (including end date).
   - Giving the archiver module the ability to archive comments on channel posts.
-  - An activity analysis module that will calculate most active users in a group based on frequency of posts.
   - May intagrate location analysis tools.
 
 ## Feedback
