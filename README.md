@@ -57,6 +57,7 @@ Telepathy installs with a user analysis tool that analyzes the post frequency of
 
 Usage: 
 ```
+cd ./advanced/analysis_dropbox
 python3 user_analysis.py > analysis.csv
 ```
 
