@@ -97,7 +97,7 @@ async def main():
 
                         file = directory + '/'+ alphanumeric + '_' + filetime_clean +'_archive.csv'
 
-                        with open(file, 'w+') as f:
+                        with open(file, 'a') as f:
                             df.to_csv(f, sep=';')
 
                         name = get_display_name(message.sender)
