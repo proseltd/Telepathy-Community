@@ -15,7 +15,7 @@ import pandas as pd
 
 __author__ = "Jordan Wildon (@jordanwildon)"
 __license__ = "MIT License"
-__version__ = "1.0.2"
+__version__ = "1.0.1"
 __maintainer__ = "Jordan Wildon"
 __email__ = "j.wildon@pm.me"
 __status__ = "Development"
@@ -93,7 +93,7 @@ async def main():
                         except FileExistsError:
                             pass
 
-                        df = pd.DataFrame(l, columns = ['Chat name','message ID','Name','ID','Message text','Timestamp','Reply to','Views','Forward information'])
+                        df = pd.DataFrame(l, columns = ['Chat name','message ID','Name','ID','Message text','Timestamp','Reply to','Views','Forward Peer ID','Forwarded From','Post Author','Forward post ID'])
 
                         file = directory + '/'+ alphanumeric + '_' + filetime_clean +'_archive.csv'
 
@@ -109,7 +109,10 @@ async def main():
                         minute = str(format(message.date.minute, '02d'))
                         reply = message.reply_to_msg_id
                         views = int(message.views)
-                        forward = message.fwd_from
+                        forward_ID = message.fwd_from.from_id
+                        forward_name = message.fwd_from.from_name
+                        forward_post_ID = int(message.fwd_from.channel_post)
+                        post_author = message.fwd_from.post_author
 
                         date = year + "-" + month + "-" + day
                         time = hour + ":" + minute
@@ -122,7 +125,7 @@ async def main():
 
                         if user_selection_date == 'y':
                             if (int(from_year) <= message.date.year and int(from_month) <= message.date.month and int(from_day) <= message.date.day):
-                                l.append([i,message.id,name,nameID,'"' + message.text + '"',timestamp,reply,views,forward])
+                                l.append([i,message.id,name,nameID,'"' + message.text + '"',timestamp,reply,views,forward_ID,forward_name,post_author,forward_post_ID])
                                 if user_selection_media == 'y':
                                     if message.media:
                                         path = await message.download_media(file=media_directory)
@@ -135,7 +138,7 @@ async def main():
                             else:
                                 break
                         else:
-                            l.append([i,message.id,name,nameID,'"' + message.text + '"',timestamp,reply,views,forward])
+                            l.append([i,message.id,name,nameID,'"' + message.text + '"',timestamp,reply,views,forward_ID,forward_name,post_author,forward_post_ID])
                             if user_selection_media == 'y':
                                 if message.media:
                                     path = await message.download_media(file=media_directory)
@@ -148,7 +151,7 @@ async def main():
                     except:
                         continue
                 else:
-                    l.append(['None','None','None','None','None','None','None','None','None','None'])
+                    l.append(['None','None','None','None','None','None','None','None','None','None','None','None','None'])
                     continue
 
             jsons = './json_files'
