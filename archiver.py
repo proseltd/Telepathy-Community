@@ -8,13 +8,14 @@ from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.types import InputPeerEmpty
 from telethon.utils import get_display_name
 from telethon.sync import TelegramClient
+from telethon import functions, types
+import datetime, csv, os
 import details as ds
 import pandas as pd
-import datetime, csv, os
 
 __author__ = "Jordan Wildon (@jordanwildon)"
 __license__ = "MIT License"
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __maintainer__ = "Jordan Wildon"
 __email__ = "j.wildon@pm.me"
 __status__ = "Development"
@@ -67,68 +68,87 @@ async def main():
     df = df.To.unique()
 
     for i in df:
-        print("Working on ", i," This may take a while...")
+        print("Working on ",i," This may take a while...")
         l = []
         try:
             async for message in client.iter_messages(i):
-                i_clean = i
-                alphanumeric = ""
+                if message is not None:
+                    try:
+                        i_clean = i
+                        alphanumeric = ""
 
-                for character in i_clean:
-                    if character.isalnum():
-                        alphanumeric += character
-                directory = './' + alphanumeric
+                        for character in i_clean:
+                            if character.isalnum():
+                                alphanumeric += character
+                        directory = './' + alphanumeric
 
-                try:
-                    os.makedirs(directory)
-                except FileExistsError:
-                    pass
-                media_directory = directory + '/media'
+                        try:
+                            os.makedirs(directory)
+                        except FileExistsError:
+                            pass
+                        media_directory = directory + '/media'
 
-                try:
-                    os.makedirs(media_directory)
-                except FileExistsError:
-                    pass
+                        try:
+                            os.makedirs(media_directory)
+                        except FileExistsError:
+                            pass
 
-                df = pd.DataFrame(l, columns = ['Chat name','message ID','Name','ID','Message text','Message date (YYYY/MM/DD)','Message time (HH:MM)'])
+                        df = pd.DataFrame(l, columns = ['Chat name','message ID','Name','ID','Message text','Timestamp','Reply to','Views','Forward information'])
 
-                file = directory + '/'+ alphanumeric + '_' + filetime_clean +'_archive.csv'
+                        file = directory + '/'+ alphanumeric + '_' + filetime_clean +'_archive.csv'
 
-                with open(file, 'w+') as f:
-                    df.to_csv(f)
+                        with open(file, 'w+') as f:
+                            df.to_csv(f, sep=';')
 
-                name = get_display_name(message.sender)
-                nameID = message.from_id
-                year = format(message.date.year, '02d')
-                month = format(message.date.month, '02d')
-                day = format(message.date.day, '02d')
-                hour = format(message.date.hour, '02d')
-                minute = format(message.date.minute, '02d')
+                        name = get_display_name(message.sender)
+                        nameID = message.from_id
+                        year = str(format(message.date.year, '02d'))
+                        month = str(format(message.date.month, '02d'))
+                        day = str(format(message.date.day, '02d'))
+                        hour = str(format(message.date.hour, '02d'))
+                        minute = str(format(message.date.minute, '02d'))
+                        reply = message.reply_to_msg_id
+                        views = int(message.views)
+                        forward = message.fwd_from
 
-                date = str(year) + "/" + str(month) + "/" + str(day)
-                time = str(hour) + ":" + str(minute)
+                        date = year + "-" + month + "-" + day
+                        time = hour + ":" + minute
+                        timestamp = date + ', ' + time
 
-                if user_selection_log == 'y':
-                    print(message.id,' ',name,':',message.text,date,time)
-                else:
-                    pass
-
-                if user_selection_date == 'y':
-                    if (int(from_year) <= message.date.year and int(from_month) <= message.date.month and int(from_day) <= message.date.day):
-                        l.append([i,message.id,name,nameID,message.text,date,time])
-                    else:
-                        break
-                else:
-                    l.append([i,message.id,name,nameID,message.text,date,time])
-
-                if user_selection_media == 'y':
-                    if message.media:
-                        path = await message.download_media(file=media_directory)
                         if user_selection_log == 'y':
-                            print('File saved to', path)
+                            print(name,':','"' + message.text + '"',timestamp)
                         else:
                             pass
+
+                        if user_selection_date == 'y':
+                            if (int(from_year) <= message.date.year and int(from_month) <= message.date.month and int(from_day) <= message.date.day):
+                                l.append([i,message.id,name,nameID,'"' + message.text + '"',timestamp,reply,views,forward])
+                                if user_selection_media == 'y':
+                                    if message.media:
+                                        path = await message.download_media(file=media_directory)
+                                        if user_selection_log == 'y':
+                                            print('File saved to', path)
+                                        else:
+                                            pass
+                                else:
+                                    continue
+                            else:
+                                break
+                        else:
+                            l.append([i,message.id,name,nameID,'"' + message.text + '"',timestamp,reply,views,forward])
+                            if user_selection_media == 'y':
+                                if message.media:
+                                    path = await message.download_media(file=media_directory)
+                                    if user_selection_log == 'y':
+                                        print('File saved to', path)
+                                    else:
+                                        pass
+                            else:
+                                continue
+                    except:
+                        continue
                 else:
+                    l.append(['None','None','None','None','None','None','None','None','None','None'])
                     continue
 
             jsons = './json_files'
@@ -139,9 +159,11 @@ async def main():
 
             df.to_json(jsons+'/'+alphanumeric+'_archive.json',orient='split',compression='infer',index='true')
 
-            print("Scrape completed for", i,", file saved")
+            print("Scrape completed for",i,", file saved")
 
             df = pd.DataFrame(None)
+
+
 
         except Exception as e:
             print("An exception occurred.", e)
