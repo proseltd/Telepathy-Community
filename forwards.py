@@ -60,11 +60,12 @@ async def main():
 
                     date = str(year) + "/" + str(month) + "/" + str(day)
                     time = str(hour) + ":" + str(minute)
+                    timestamp = date + ", " + time
                     if user_selection_media == 'y':
                         print(ent.title,">>>",channel_name)
                     else:
                         pass
-                    df = pd.DataFrame(l, columns = ['To','From','date','time'])
+                    df = pd.DataFrame(l, columns = ['To','From','timestamp'])
 
                     name_clean = channel_name
                     alphanumeric = ""
@@ -84,7 +85,7 @@ async def main():
                     with open(file,'w+') as f:
                         df.to_csv(f)
 
-                    l.append([channel_name, ent.title, date, time])
+                    l.append([channel_name, ent.title, timestamp])
 
             except:
                 if user_selection_media == 'y':
@@ -125,13 +126,14 @@ if next1 == 'y':
 
                             date = str(year) + "/" + str(month) + "/" + str(day)
                             time = str(hour) + ":" + str(minute)
+                            timestamp = date + ", " + time
 
                             if user_selection_media == 'y':
                                 print(ent.title,">>>",i)
                             else:
                                 pass
 
-                            df = pd.DataFrame(l, columns = ['To','From','date','time'])
+                            df = pd.DataFrame(l, columns = ['To','From','Timestamp'])
 
                             name_clean = channel_name
                             alphanumeric = ""
@@ -151,7 +153,7 @@ if next1 == 'y':
                             with open(file1,'w+') as f:
                                 df.to_csv(f)
 
-                            l.append([i, ent.title, date, time])
+                            l.append([i, ent.title, timestamp])
                     except:
                         if user_selection_media == 'y':
                             print("An exception occurred: Could be private, now deleted, or a group.")
