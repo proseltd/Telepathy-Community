@@ -71,8 +71,8 @@ Telegram chats are organised into two [key types][2]: channels and megagroups/su
 Telepathy is still in the development stage with this version serving as an early release. Some bugs may still be present and some features are yet to be added. In some environments (particularly Window), Telepathy struggles to effectively manage files and can sometimes produce errors. Fixes for these errors should come soon. 
 
 Upcoming features include:
-~~  - Adding message views to the archiver module.~~
-~~  - Expanding the time specifications for the archive module to include be able to set a specific period (including end date).~~
+  - ~~Adding message views to the archiver module.~~
+  - ~~Expanding the time specifications for the archive module to include be able to set a specific period (including end date).~~
   - Giving the archiver module the ability to archive comments on channel posts.
   - May integrate location analysis tools.
 
