@@ -50,7 +50,6 @@ async def main():
                 id = message.forward.original_fwd.from_id
                 if id is not None:
                     ent = await client.get_entity(id)
-                    name = get_display_name(message.sender)
                     nameID = message.from_id
                     year = format(message.date.year, '02d')
                     month = format(message.date.month, '02d')
@@ -61,7 +60,7 @@ async def main():
                     date = str(year) + "/" + str(month) + "/" + str(day)
                     time = str(hour) + ":" + str(minute)
                     timestamp = date + ", " + time
-                    if user_selection_media == 'y':
+                    if user_selection_log == 'y':
                         print(ent.title,">>>",channel_name)
                     else:
                         pass
@@ -88,7 +87,7 @@ async def main():
                     l.append([channel_name, ent.title, timestamp])
 
             except:
-                if user_selection_media == 'y':
+                if user_selection_log == 'y':
                     print("An exception occurred: Could be private, now deleted, or a group.")
                 else:
                     pass
