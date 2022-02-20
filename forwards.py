@@ -127,7 +127,7 @@ if next1 == 'y':
                             time = str(hour) + ":" + str(minute)
                             timestamp = date + ", " + time
 
-                            if user_selection_media == 'y':
+                            if user_selection_log == 'y':
                                 print(ent.title,">>>",i)
                             else:
                                 pass
