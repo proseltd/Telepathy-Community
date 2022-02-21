@@ -154,7 +154,7 @@ if next1 == 'y':
 
                             l.append([i, ent.title, timestamp])
                     except:
-                        if user_selection_media == 'y':
+                        if user_selection_log == 'y':
                             print("An exception occurred: Could be private, now deleted, or a group.")
                         else:
                             pass
