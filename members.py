@@ -6,6 +6,7 @@
 
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.types import InputPeerEmpty
+from telethon.sync import TelegramClient
 import details as ds
 import csv, os
 
@@ -59,9 +60,9 @@ for g in groups:
 g_index = input("Enter a Number: ")
 target_group=groups[int(g_index)]
 
-print('Fetching members for'+target_group.title+'...')
+print('Fetching members for '+target_group.title+'...')
 all_participants = []
-all_participants = client.get_participants(target_group, aggressive=True)
+all_participants = client.get_participants(target_group)
 
 print('Creating file...')
 directory = './memberlists'
