@@ -132,7 +132,7 @@ if next1 == 'y':
                             else:
                                 pass
 
-                            df = pd.DataFrame(l, columns = ['To','From','Timestamp'])
+                            df = pd.DataFrame(l, columns = ['To','From','From ID','Timestamp'])
 
                             name_clean = channel_name
                             alphanumeric = ""
@@ -152,7 +152,7 @@ if next1 == 'y':
                             with open(file1,'w+') as f:
                                 df.to_csv(f)
 
-                            l.append([i, ent.title, timestamp])
+                            l.append([i, ent.title, id, timestamp])
                     except:
                         if user_selection_log == 'y':
                             print("An exception occurred: Could be private, now deleted, or a group.")
