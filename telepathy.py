@@ -4,7 +4,6 @@
 gather memberlists for groups, create edglists for forwarded messages and more.
 """
 
-from telethon.sync import TelegramClient
 from telethon import TelegramClient
 
 __author__ = "Jordan Wildon (@jordanwildon)"
@@ -17,7 +16,7 @@ __status__ = "Development"
 print('Welcome to Telepathy')
 print('Please select a function:')
 
-li = ['Batch chat archiver','Archive within a timeframe','Scrape group members','Scrape forwarded messages in a chat','Lookup a user ID']
+li = ['Batch chat archiver','Archive within a timeframe','Scrape group members','Scrape forwarded messages in a chat','Lookup a user ID','Lookup a list of channel IDs']
 
 def display(li):
     for idx, tables in enumerate(li):
@@ -50,3 +49,6 @@ elif choice == 'Scrape forwarded messages in a chat':
 elif choice == 'Lookup a user ID':
     print('Launching Telegram user lookup...')
     exec(open("userlookup.py").read())
+elif choice == 'Lookup a list of channel IDs':
+    print('Launching Telegram channel lookup...')
+    exec(open("channellookup.py").read())
