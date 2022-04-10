@@ -73,8 +73,10 @@ Telepathy is still in the development stage with this version serving as an earl
 Upcoming features include:
   - ~~Adding message views to the archiver module.~~
   - ~~Expanding the time specifications for the archive module to include be able to set a specific period (including end date).~~
-  - Giving the archiver module the ability to archive comments on channel posts.
-  - May integrate location analysis tools.
+  - ~~Giving the archiver module the ability to archive comments on channel posts.~~
+  - ~~May integrate location analysis tools.~~
+  - Build a CLI wrapper to improve ease of use.
+  - Create a tool for generating sourcelist files.
 
 ## Feedback
 
