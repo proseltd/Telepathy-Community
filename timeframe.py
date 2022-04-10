@@ -5,16 +5,18 @@
 """
 
 from telethon.tl.functions.messages import GetDialogsRequest
+from telethon.errors import SessionPasswordNeededError
+from datetime import date, datetime, timedelta
 from telethon.tl.types import InputPeerEmpty
 from telethon.utils import get_display_name
 from telethon.sync import TelegramClient
 from elasticsearch import Elasticsearch
 from elasticsearch import helpers
-from datetime import date, datetime, timedelta
 import datetime, csv, os
 import details as ds
 import pandas as pd
 import numpy as np
+import getpass
 
 __author__ = "Jordan Wildon (@jordanwildon)"
 __license__ = "MIT License"
@@ -31,7 +33,11 @@ client = TelegramClient(phone, api_id, api_hash)
 client.connect()
 if not client.is_user_authorized():
     client.send_code_request(phone)
-    client.sign_in(phone, input('Enter the code: '))
+    client.sign_in(phone)
+    try:
+        client.sign_in(code=input('Enter code: '))
+    except SessionPasswordNeededError:
+        client.sign_in(password=getpass.getpass(prompt='Password: ', stream=None)
 
 chats = []
 last_date = None

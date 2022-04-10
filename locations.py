@@ -6,12 +6,14 @@
 
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.types import PeerUser, PeerChat, PeerChannel
+from telethon.errors import SessionPasswordNeededError
 from telethon.tl.types import InputPeerEmpty
 from telethon.utils import get_display_name
 from telethon.sync import TelegramClient
 from telethon import functions, types
 import details as ds
 import pandas as pd
+import getpass
 
 __author__ = "Jordan Wildon (@jordanwildon)"
 __license__ = "MIT License"
@@ -30,7 +32,11 @@ client = TelegramClient(phone, api_id, api_hash)
 client.connect()
 if not client.is_user_authorized():
     client.send_code_request(phone)
-    client.sign_in(phone, input('Enter the code: '))
+    client.sign_in(phone)
+    try:
+        client.sign_in(code=input('Enter code: '))
+    except SessionPasswordNeededError:
+        client.sign_in(password=getpass.getpass(prompt='Password: ', stream=None)
 
 print('Welcome to the Telegram location tool.\nThis tool will find users near a location. The tool requires your Telegram account to have a profile picture.')
 lati = input('Enter the latitude:\n')

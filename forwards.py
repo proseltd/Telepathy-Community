@@ -5,10 +5,11 @@
 """
 
 from telethon import TelegramClient
+from telethon.errors import SessionPasswordNeededError
 from telethon import utils
 import pandas as pd
 import details as ds
-import os
+import os, getpass
 
 __author__ = "Jordan Wildon (@jordanwildon)"
 __license__ = "MIT License"
@@ -25,7 +26,11 @@ client = TelegramClient(phone, api_id, api_hash)
 client.connect()
 if not client.is_user_authorized():
     client.send_code_request(phone)
-    client.sign_in(phone, input('Enter the code: '))
+    client.sign_in(phone)
+    try:
+        client.sign_in(code=input('Enter code: '))
+    except SessionPasswordNeededError:
+        client.sign_in(password=getpass.getpass(prompt='Password: ', stream=None)
 
 print('Welcome to channel forward scraper.\nThis tool will scrape a Telegram channel for all forwarded messages and their original sources.')
 user_selection_log = input('Do you want to print forwards to terminal while Telepathy runs? (y/n)')
