@@ -8,7 +8,7 @@ from telethon import TelegramClient
 
 __author__ = "Jordan Wildon (@jordanwildon)"
 __license__ = "MIT License"
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 __maintainer__ = "Jordan Wildon"
 __email__ = "j.wildon@pm.me"
 __status__ = "Development"
@@ -16,7 +16,7 @@ __status__ = "Development"
 print('Welcome to Telepathy')
 print('Please select a function:')
 
-li = ['Batch chat archiver','Archive within a timeframe','Scrape group members','Scrape forwarded messages in a chat','Lookup a user ID','Lookup a list of channel IDs']
+li = ['Batch chat archiver','Archive within a timeframe','Scrape group members','Scrape forwarded messages in a chat','Lookup a user ID','Lookup a list of channel IDs','Lookup users by location']
 
 def display(li):
     for idx, tables in enumerate(li):
@@ -52,3 +52,6 @@ elif choice == 'Lookup a user ID':
 elif choice == 'Lookup a list of channel IDs':
     print('Launching Telegram channel lookup...')
     exec(open("channellookup.py").read())
+elif choice == 'Lookup users by location':
+    print('Launching Telegram location lookup...')
+    exec(open("locations.py").read())

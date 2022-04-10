@@ -7,6 +7,7 @@
 from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.types import PeerUser, PeerChat, PeerChannel
+from telethon import functions, types
 from telethon.tl.types import InputPeerEmpty
 from telethon.utils import get_display_name
 import details as ds
@@ -14,7 +15,7 @@ import pandas as pd
 
 __author__ = "Jordan Wildon (@jordanwildon)"
 __license__ = "MIT License"
-__version__ = "1.0.1"
+__version__ = "1.0.3"
 __maintainer__ = "Jordan Wildon"
 __email__ = "j.wildon@pm.me"
 __status__ = "Development"
@@ -37,7 +38,8 @@ async def main():
             try:
                 ent = await client.get_entity(i)
                 username = ent.username
-                print("https://t.me/" + username)
+                id = ent.id
+                print("https://t.me/" + username + " " + username + " " + str(id))
 
             except Exception as e:
                 substring = "Cannot find any entity"

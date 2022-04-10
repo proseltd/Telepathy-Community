@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+
+"""Telepathy archiving module:
+    A tool for archiving Telegram chats within specific parameters.
+"""
+
+__author__ = "Jordan Wildon (@jordanwildon)"
+__license__ = "MIT License"
+__version__ = "1.0.3"
+__maintainer__ = "Jordan Wildon"
+__email__ = "j.wildon@pm.me"
+__status__ = "Development"
+
 print('Welcome to the Telepathy setup.\nThis file wil save your Telegram login information to allow API access.\nFollow the README instructions to get your credentials.')
 
 fin1 = open("detailsshell.py", "rt")

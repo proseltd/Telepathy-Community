@@ -12,7 +12,7 @@ import os
 
 __author__ = "Jordan Wildon (@jordanwildon)"
 __license__ = "MIT License"
-__version__ = "1.0.1"
+__version__ = "1.0.3"
 __maintainer__ = "Jordan Wildon"
 __email__ = "j.wildon@pm.me"
 __status__ = "Development"
@@ -41,16 +41,31 @@ while True:
     except:
             continue
 
+name_clean = channel_name
+alphanumeric = ""
+
+for character in name_clean:
+    if character.isalnum():
+        alphanumeric += character
+
+directory = './edgelists/'
+try:
+    os.makedirs(directory)
+except FileExistsError:
+    pass
+
+file = './edgelists/'+ alphanumeric + '_edgelist.csv'
+
 async def main():
     l = []
     async for message in client.iter_messages(channel_name):
-
         if message.forward is not None:
             try:
                 id = message.forward.original_fwd.from_id
                 if id is not None:
                     ent = await client.get_entity(id)
                     nameID = message.from_id
+                    username = ent.username
                     year = format(message.date.year, '02d')
                     month = format(message.date.month, '02d')
                     day = format(message.date.day, '02d')
@@ -64,31 +79,19 @@ async def main():
                         print(ent.title,">>>",channel_name)
                     else:
                         pass
-                    df = pd.DataFrame(l, columns = ['To','From','timestamp'])
-
-                    name_clean = channel_name
-                    alphanumeric = ""
-
-                    for character in name_clean:
-                        if character.isalnum():
-                            alphanumeric += character
-
-                    directory = './edgelists/'
-                    try:
-                        os.makedirs(directory)
-                    except FileExistsError:
-                        pass
-
-                    file = './edgelists/'+ alphanumeric + '_edgelist.csv'
+                    df = pd.DataFrame(l, columns = ['To','From','From ID','From_username','timestamp'])
 
                     with open(file,'w+') as f:
-                        df.to_csv(f)
+                        df.to_csv(f, sep=';')
 
-                    l.append([channel_name, ent.title, timestamp])
+                    l.append([channel_name,ent.title,id,username,timestamp])
 
             except:
                 if user_selection_log == 'y':
-                    print("An exception occurred: Could be private, now deleted, or a group.")
+                    print("An exception occurred: " + str(id) + " could be private, now deleted, or a group.")
+                    #append not founds to a logfile for further investigation
+                elif ValueError:
+                    print(str(id) + " not found.")
                 else:
                     pass
 
@@ -103,12 +106,11 @@ if next1 == 'y':
     async def new_main():
         name_clean = channel_name
         alphanumeric = ""
-
         for character in name_clean:
             if character.isalnum():
                 alphanumeric += character
-        df = pd.read_csv('./edgelists/'+ alphanumeric + '_edgelist.csv')
-        df = df.From.unique()
+        df = pd.read_csv(file, sep=';')
+        df = df.From_username.unique()
         l = []
         for i in df:
             async for message in client.iter_messages(i):
@@ -128,11 +130,11 @@ if next1 == 'y':
                             timestamp = date + ", " + time
 
                             if user_selection_log == 'y':
-                                print(ent.title,">>>",i)
+                                print(ent.title,">>>",channel_name)
                             else:
                                 pass
 
-                            df = pd.DataFrame(l, columns = ['To','From','From ID','Timestamp'])
+                            df = pd.DataFrame(l, columns = ['To','From','From ID','From_username','timestamp'])
 
                             name_clean = channel_name
                             alphanumeric = ""
@@ -152,10 +154,13 @@ if next1 == 'y':
                             with open(file1,'w+') as f:
                                 df.to_csv(f)
 
-                            l.append([i, ent.title, id, timestamp])
+                            l.append([channel_name,ent.title,id,username,timestamp])
                     except:
                         if user_selection_log == 'y':
-                            print("An exception occurred: Could be private, now deleted, or a group.")
+                            print("An exception occurred: " + str(id) + " could be private, now deleted, or a group.")
+                            #append not founds to a logfile for further investigation
+                        elif ValueError:
+                            print(str(id) + " not found.")
                         else:
                             pass
 

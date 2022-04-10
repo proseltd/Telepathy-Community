@@ -18,7 +18,7 @@ import numpy as np
 
 __author__ = "Jordan Wildon (@jordanwildon)"
 __license__ = "MIT License"
-__version__ = "1.0.1"
+__version__ = "1.0.3"
 __maintainer__ = "Jordan Wildon"
 __email__ = "j.wildon@pm.me"
 __status__ = "Development"
@@ -59,9 +59,9 @@ from_day = input('Please specify the start date (Day, without leading 0 - DD)')
 dt_start = from_year + ',' + from_month + ',' + from_day
 d_start = datetime.datetime.strptime(dt_start, '%Y,%m,%d')
 
-to_year = input('Please specify the start date (Year YYYY)')
-to_month = input('Please specify the start date (Mon th, without leading 0 - MM)')
-to_day = input('Please specify the start date (Day, without leading 0 - DD)')
+to_year = input('Please specify the end date (Year YYYY)')
+to_month = input('Please specify the end date (Mon th, without leading 0 - MM)')
+to_day = input('Please specify the end date (Day, without leading 0 - DD)')
 dt_end = to_year + ',' + to_month + ',' + to_day
 d_end = datetime.datetime.strptime(dt_end, '%Y,%m,%d')
 
@@ -97,7 +97,7 @@ async def main():
                         except FileExistsError:
                             pass
 
-                        df = pd.DataFrame(l, columns = ['Chat name','message ID','Name','ID','Message text','Timestamp'])
+                        df = pd.DataFrame(l, columns = ['Chat name','message ID','Name','ID','Message text','Timestamp','Reply to','Views','Forward Peer ID','Forwarded From','Post Author','Forward post ID'])
 
                         name = get_display_name(message.sender)
                         nameID = message.from_id
@@ -111,20 +111,21 @@ async def main():
                         datestamp_clean = datetime.datetime.strptime(datestamp, '%Y,%m,%d')
                         timestamp = year + "-" + month + "-" + day + ", " + hour + ":" + minute
 
-                        if d_start <= datestamp_clean and d_end >= datestamp_clean:
-                            l.append([i,message.id,name,nameID,'"' + message.text + '"',timestamp])
+                        if d_start <= datestamp_clean: #and d_end >= datestamp_clean:
+                            l.append([i,message.id,name,nameID,'"' + message.text + '"',timestamp,reply,views,forward_ID,forward_name,post_author,forward_post_ID])
                             print(i,message.id,name,nameID,'"' + message.text + '"',timestamp)
-                            if message.media:
-                                path = await message.download_media(file=media_directory)
+                            #if message.media:
+                            #    path = await message.download_media(file=media_directory)
                             file = directory + '/'+ alphanumeric + '_' + filetime_clean +'_archive.csv'
 
                             with open(file, 'w+') as f:
                                 df.to_csv(f, sep=';')
                         else:
-                            continue
+                            break
                     except:
                         continue
                 else:
+                    l.append(['None','None','None','None','None','None','None','None','None','None','None','None','None'])
                     continue
 
         except Exception as e:
