@@ -30,7 +30,7 @@ if not client.is_user_authorized():
     try:
         client.sign_in(code=input('Enter code: '))
     except SessionPasswordNeededError:
-        client.sign_in(password=getpass.getpass(prompt='Password: ', stream=None)
+        client.sign_in(password=getpass.getpass(prompt='Password: ', stream=None))
 
 print('Welcome to channel forward scraper.\nThis tool will scrape a Telegram channel for all forwarded messages and their original sources.')
 user_selection_log = input('Do you want to print forwards to terminal while Telepathy runs? (y/n)')

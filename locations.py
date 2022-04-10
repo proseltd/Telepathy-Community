@@ -36,7 +36,7 @@ if not client.is_user_authorized():
     try:
         client.sign_in(code=input('Enter code: '))
     except SessionPasswordNeededError:
-        client.sign_in(password=getpass.getpass(prompt='Password: ', stream=None)
+        client.sign_in(password=getpass.getpass(prompt='Password: ', stream=None))
 
 print('Welcome to the Telegram location tool.\nThis tool will find users near a location. The tool requires your Telegram account to have a profile picture.')
 lati = input('Enter the latitude:\n')

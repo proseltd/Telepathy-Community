@@ -34,7 +34,7 @@ if not client.is_user_authorized():
     try:
         client.sign_in(code=input('Enter code: '))
     except SessionPasswordNeededError:
-        client.sign_in(password=getpass.getpass(prompt='Password: ', stream=None)
+        client.sign_in(password=getpass.getpass(prompt='Password: ', stream=None))
 
 async def main():
     df = pd.read_csv('sourcelist.csv', sep=';')
