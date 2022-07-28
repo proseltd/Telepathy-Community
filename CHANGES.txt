@@ -1,0 +1,20 @@
+v2.0.0, 28.07.2022 -- Major update! Everything is simpler, more organized
+and complies with updates to Telegram's API. Automated statistics are included,
+as well as a few more toys, with more to come!
+
+v1.1.15, 25.04.2022 -- Fixed locations module, added phone number retrieval to
+the participants module, improved documentation.
+
+v1.1.13/14, 21.04.2022 -- Bug fixes.
+
+v1.1.12, 21.04.2022 -- Fixed file management, updated advanced tools.
+
+v1.1.4 - v1.1.11, 16.04.2022 -- Bug fixes.
+
+v1.1.3, 16.04.2022 -- Added support for multiple -n flags.
+
+v1.1.2, 15.04.2022 -- Bug fixes.
+
+v1.1.1, 15.04.2022 -- Updated directory handling.
+
+v1.1.0, 15.04.2022 -- Initial release.
