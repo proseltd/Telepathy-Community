@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="telepathy",
-    version='2.0.0',
+    version='2.1.3',
     author='Jordan Wildon',
     author_email='j.wildon@pm.me',
     packages=['telepathy'],
