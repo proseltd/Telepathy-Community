@@ -1,0 +1,6 @@
+alive-progress==2.4.1
+beautifulsoup4==4.9.3
+Click==7.0
+colorama==0.4.3
+pandas==1.4.2
+Telethon==1.24.0
