@@ -81,10 +81,18 @@ $ telepathy -t durov -c -m
 
 Looks up a specified user ID.
 
+```
+$ telepathy -u 0123456789
+```
+
 
 - **'--location', '-l' [COORDINATES]**
 
-Finds users near to specified coordinates.
+Finds users near to specified coordinates. Input should be longitude followed by latitude, sperated by a comma.
+
+```
+$ telepathy -l 51.5032973,-0.1217424
+```
 
 
 ## A note on how Telegram works
@@ -101,14 +109,14 @@ Upcoming features include:
   - [ ] The ability to archive comments on messages to channels.
   - [ ] The ability to gather the number of reactions to messages, including statistics on engagement rate.
   - [ ] Finding a method to once again gather complete memberlists (currently restricted by the API).
-  - [ ] Introducing the ability to scan multiple targets at once.
+  - [x] Introducing the ability to scan multiple targets at once.
   - [ ] Improved statistics: including timestamp analysis for channels.
   - [ ] Generating an entirely automated complete report, including visualisation for some statistics.
   - [ ] Making it easier to scan private groups which your account is a member of.
   - [ ] Hate speech analytics.
   - [ ] Clean code, efficiency tweaks.
-  - [ ] Add user lookup.
-  - [ ] Add location lookup.
+  - [x] Add user lookup.
+  - [x] Add location lookup.
   - [ ] Maximise compatibility of edgelists with Gephi.
 
 
