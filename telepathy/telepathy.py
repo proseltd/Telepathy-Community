@@ -87,21 +87,23 @@ user_agent = [
 ]
 
 @click.command()
-@click.option('--target', '-t', default='', multiple = True,
-              help='Specifies a chat to investigate.')
-@click.option('--comprehensive', '-c', is_flag=True,
-              help='Comprehensive scan, includes archiving.')
-@click.option('--media', '-m', is_flag=True,
-              help='Archives media in the specified chat.')
-@click.option('--forwards', '-f', is_flag=True,
-              help='Scrapes forwarded messages.')
-@click.option('--user', '-u', default='',
-            help='Looks up a specified user ID.')
-@click.option('--location', '-l', default='',
-            help='Finds users near to specified coordinates.')
+@click.option('--target', '-t', default = '', multiple = True,
+              help = 'Specifies a chat to investigate.')
+@click.option('--comprehensive', '-c', is_flag = True,
+              help = 'Comprehensive scan, includes archiving.')
+@click.option('--media', '-m', is_flag = True,
+              help = 'Archives media in the specified chat.')
+@click.option('--forwards', '-f', is_flag = True,
+              help = 'Scrapes forwarded messages.')
+@click.option('--user', '-u', default = '',
+            help = 'Looks up a specified user ID.')
+@click.option('--location', '-l', default = '',
+            help = 'Finds users near to specified coordinates.')
+@click.option('--alt', '-a', is_flag = True, default = '',
+            help = 'Uses an alternative login.')
 
 
-def cli(target,comprehensive,media,forwards,user,location):
+def cli(target,comprehensive,media,forwards,user,location,alt):
 
     print(Fore.GREEN + """
       ______     __                 __  __
@@ -111,30 +113,43 @@ def cli(target,comprehensive,media,forwards,user,location):
     /_/  \___/_/\___/ .___/\__,_/\__/_/ /_/\__, /
                    /_/                    /____/
     -- An OSINT toolkit for investigating Telegram chats.
-    -- Developed by @jordanwildon | Version 2.0.0.
+    -- Developed by @jordanwildon | Version 2.1.4.
     """)
 
     print(Style.RESET_ALL)
 
-    # Checking for, or creating Telepathy home directory and credentials file
     telepathy_file = './telepathy_files/'
     try:
         os.makedirs(telepathy_file)
     except FileExistsError:
         pass
 
-    login = telepathy_file + 'login.txt'
+    if alt:
+        login = telepathy_file + 'login_alt.txt'
 
-    if os.path.isfile(login) == False:
-        api_id = input(' Please enter your API ID:\n')
-        api_hash = input(" Please enter your API Hash:\n")
-        phone_number = input(" Please enter your phone number:\n")
-        with open(login, 'w+', encoding="utf-8") as f:
-            f.write(api_id + ',' + api_hash + ',' + phone_number)
+        if os.path.isfile(login) == False:
+            api_id = input(' Please enter your API ID:\n')
+            api_hash = input(" Please enter your API Hash:\n")
+            phone_number = input(" Please enter your phone number:\n")
+            with open(login, 'w+', encoding="utf-8") as f:
+                f.write(api_id + ',' + api_hash + ',' + phone_number)
+        else:
+            with open(login, encoding="utf-8") as f:
+                details = f.read()
+                api_id, api_hash, phone_number = details.split(sep=',')
     else:
-        with open(login, encoding="utf-8") as f:
-            details = f.read()
-            api_id, api_hash, phone_number = details.split(sep=',')
+        login = telepathy_file + 'login.txt'
+
+        if os.path.isfile(login) == False:
+            api_id = input(' Please enter your API ID:\n')
+            api_hash = input(" Please enter your API Hash:\n")
+            phone_number = input(" Please enter your phone number:\n")
+            with open(login, 'w+', encoding="utf-8") as f:
+                f.write(api_id + ',' + api_hash + ',' + phone_number)
+        else:
+            with open(login, encoding="utf-8") as f:
+                details = f.read()
+                api_id, api_hash, phone_number = details.split(sep=',')
 
     client = TelegramClient(phone_number, api_id, api_hash)
 
