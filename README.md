@@ -1,6 +1,6 @@
 
 
-Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.0.
+Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.1.4.
 
 
 ## Installation
@@ -16,7 +16,7 @@ $ pip3 install telepathy
 ```
 $ git clone https://github.com/jordanwildon/Telepathy.git
 $ cd Telepathy
-$ pip install -r requirements.txt
+$
 ```
 
 ## Setup
@@ -88,11 +88,20 @@ $ telepathy -u 0123456789
 
 - **'--location', '-l' [COORDINATES]**
 
-Finds users near to specified coordinates. Input should be longitude followed by latitude, sperated by a comma.
+Finds users near to specified coordinates. Input should be longitude followed by latitude, seperated by a comma.
 
 ```
 $ telepathy -l 51.5032973,-0.1217424
 ```
+
+- **'--alt', '-a'**
+
+Flag for running Telepathy from an alternative number. You can use the same API key and Hash but authenticate with a different phone number. Allows for running multiple scans at once.
+
+```
+$ telepathy -t Durov -c -a
+```
+
 
 
 ## A note on how Telegram works
