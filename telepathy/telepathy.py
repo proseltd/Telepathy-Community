@@ -30,7 +30,7 @@ from bs4 import BeautifulSoup
 
 __author__ = "Jordan Wildon (@jordanwildon)"
 __license__ = "MIT License"
-__version__ = "2.1.3"
+__version__ = "2.1.8"
 __maintainer__ = "Jordan Wildon"
 __email__ = "j.wildon@pm.me"
 __status__ = "Development"
@@ -99,7 +99,7 @@ user_agent = [
             help = 'Looks up a specified user ID.')
 @click.option('--location', '-l', default = '',
             help = 'Finds users near to specified coordinates.')
-@click.option('--alt', '-a', is_flag = True, default = '',
+@click.option('--alt', '-a', is_flag = True, default = False,
             help = 'Uses an alternative login.')
 
 
@@ -113,7 +113,7 @@ def cli(target,comprehensive,media,forwards,user,location,alt):
     /_/  \___/_/\___/ .___/\__,_/\__/_/ /_/\__, /
                    /_/                    /____/
     -- An OSINT toolkit for investigating Telegram chats.
-    -- Developed by @jordanwildon | Version 2.1.4.
+    -- Developed by @jordanwildon | Version 2.1.8.
     """)
 
     print(Style.RESET_ALL)
@@ -125,6 +125,11 @@ def cli(target,comprehensive,media,forwards,user,location,alt):
         pass
 
     if alt:
+        alt_check = True
+    else:
+        alt_check = False
+
+    if alt_check == True:
         login = telepathy_file + 'login_alt.txt'
 
         if os.path.isfile(login) == False:
@@ -154,8 +159,6 @@ def cli(target,comprehensive,media,forwards,user,location,alt):
     client = TelegramClient(phone_number, api_id, api_hash)
 
     for t in target:
-
-        # Checking for or creating the directory and filename for the target
         target_clean = t
         alphanumeric = ""
         filetime = datetime.datetime.now().strftime("%Y_%m_%d-%H_%M")
