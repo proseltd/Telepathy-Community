@@ -1,3 +1,5 @@
+v2.1.4, 09.08.2022 -- Added support for multiple clients. Bug fixes.
+
 v2.1.0/3, 08.08.2022 -- Added user lookup, location lookup, support for multiple
 targets, log file, bug fixes, and improved encoding.
 
