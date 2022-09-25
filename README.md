@@ -16,7 +16,7 @@ $ pip3 install telepathy
 ```
 $ git clone https://github.com/jordanwildon/Telepathy.git
 $ cd Telepathy
-$
+$ pip install -r requirements.txt
 ```
 
 ## Setup
@@ -79,7 +79,7 @@ $ telepathy -t durov -c -m
 
 - **'--user', '-u' [USER]**
 
-Looks up a specified user ID.
+Looks up a specified user ID. This will only work if your account has "encountered" the user before (for example, after archiving a group).
 
 ```
 $ telepathy -u 0123456789
@@ -100,6 +100,14 @@ Flag for running Telepathy from an alternative number. You can use the same API 
 
 ```
 $ telepathy -t Durov -c -a
+```
+
+- **'--export', '-e'**
+
+Exports all chats your account is part of to a CSV file. In a future release, this may assist with setting up multiple accounts following the same groups.
+
+```
+$ telepathy -e
 ```
 
 
@@ -127,11 +135,12 @@ Upcoming features include:
   - [x] Add user lookup.
   - [x] Add location lookup.
   - [ ] Maximise compatibility of edgelists with Gephi.
+  - [ ] Include sockpuppet account provisioning.
 
 
 ## feedback
 
-Please send feedback to @jordanwildon on Twitter.
+Please send feedback to @jordanwildon on Twitter. You can follow Telepathy updates at @TelepathyDB.
 
 
 ## Usage terms
