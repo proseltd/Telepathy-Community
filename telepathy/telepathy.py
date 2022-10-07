@@ -87,6 +87,61 @@ user_agent = [
     'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.19 (KHTML, like Gecko) Iron/0.2.152.0 Safari/13657880.525'
 ]
 
+def parse_tg_date(dd):
+    year = str(format(dd.year, '02d'))
+    month = str(format(dd.month, '02d'))
+    day = str(format(dd.day, '02d'))
+    hour = str(format(dd.hour, '02d'))
+    minute = str(format(dd.minute, '02d'))
+    second = str(format(dd.second, '02d'))
+    date = year + "-" + month + "-" + day
+    mtime = hour + ":" + minute + ":" + second
+    timestamp = date + 'T' + mtime + '+00:00'
+    return timestamp
+
+def populate_user(user, group_or_chat):
+    if user.username:
+        username = user.username
+    else:
+        username = "n/a"
+    if user.first_name:
+        first_name = user.first_name
+    else:
+        first_name = ""
+    if user.last_name:
+        last_name = user.last_name
+    else:
+        last_name = ""
+    if user.phone:
+        phone = user.phone
+    else:
+        phone = "n/a"
+    full_name = (first_name + ' ' + last_name).strip()
+    return [username, full_name, user.id, phone, group_or_chat]
+
+def process_message(mess, user_lang):
+
+    if mess is not None:
+        mess_txt = '"' + mess + '"'
+    else:
+        mess_txt = 'none'
+
+    if mess_txt != 'none':
+        translator = Translator()
+        detection = translator.detect(mess_txt)
+        language_code = detection.lang
+        translation_confidence = detection.confidence
+        translation = translator.translate(mess_txt,
+                                           dest=user_lang)
+        original_language = translation.src
+        translated_text = translation.text
+    else:
+        original_language = user_lang
+        translated_text = 'n/a'
+        translation_confidence = 'n/a'
+
+    return {"original_language":original_language, "translated_text": translated_text, "translation_confidence":translation_confidence, "message_text":mess_txt }
+
 @click.command()
 @click.option('--target', '-t', default = ' ', multiple = True,
               help = 'Specifies a chat to investigate.')
@@ -250,6 +305,8 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                           + 'Performing comprehensive scan')
 
                     file_archive = save_directory + '/' + alphanumeric + '_' + filetime_clean + '_archive.csv'
+                    reply_file_archive = save_directory + '/' + alphanumeric + '_' + filetime_clean + '_reply_archive.csv'
+
 
                 if forwards_check == True:
                     print(Fore.GREEN + ' [!] '
@@ -284,6 +341,7 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                         pass
 
                     memberlist_filename = memberlist_directory + '/' + alphanumeric + "_members.csv"
+                    reply_memberlist_filename = memberlist_directory + '/' + alphanumeric + "_active_members.csv"
 
                     entity = await client.get_entity(t)
                     first_post = 'Not found'
@@ -377,30 +435,10 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                         all_participants = await client.get_participants(t, limit = 5000)
 
                         for user in all_participants:
-                            if user.username:
-                                username = user.username
-                            else:
-                                username = "n/a"
-                            if user.first_name:
-                                first_name = user.first_name
-                            else:
-                                first_name = ""
-                            if user.last_name:
-                                last_name = user.last_name
-                            else:
-                                last_name = ""
-                            if user.phone:
-                                phone = user.phone
-                            else:
-                                phone = "n/a"
-
-                            full_name = (first_name + ' ' + last_name).strip()
-
                             members_df = pd.DataFrame(members, columns = ['username','full name',
                                                                           'user id','phone number',
                                                                           'group name'])
-
-                            members.append([username,full_name,user.id,phone,t])
+                            members.append(populate_user(user,t))
 
                         with open(memberlist_filename,'w+', encoding="utf-8") as save_members:
                             members_df.to_csv(save_members, sep=';')
@@ -548,16 +586,7 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                                         if f_from_id is not None:
                                             ent = await client.get_entity(f_from_id)
                                             username = ent.username
-                                            year = format(message.date.year, '02d')
-                                            month = format(message.date.month, '02d')
-                                            day = format(message.date.day, '02d')
-                                            hour = format(message.date.hour, '02d')
-                                            minute = format(message.date.minute, '02d')
-                                            second = format(message.date.second, '02d')
-
-                                            date = str(year) + "/" + str(month) + "/" + str(day)
-                                            mtime = str(hour) + ":" + str(minute) + ":" + str(second)
-                                            timestamp = date + 'T' + mtime + '+00:00'
+                                            timestamp = parse_tg_date(message.date)
 
                                             substring = "PeerUser"
                                             string = str(f_from_id)
@@ -676,6 +705,12 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
 
                             message_list = []
                             forwards_list = []
+
+                            user_reaction_list = []
+
+                            replies_list = []
+                            user_replier_list = []
+
                             timecount = []
 
                             forward_count = 0
@@ -717,6 +752,7 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                                                                           limit = None):
                                     if message is not None:
                                         try:
+
                                             c_archive = pd.DataFrame(message_list,
                                                                      columns = ['To', 'Message ID',
                                                                                  'Display_name', 'ID',
@@ -729,6 +765,38 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                                                                                 'From', 'From_ID', 'Username',
                                                                                 'Timestamp'])
 
+                                            if message.reactions:
+                                                if message.reactions.can_see_list:
+                                                    c_reactioneer = pd.DataFrame(user_reaction_list, columns=['username', 'full name',
+                                                                                            'user id', 'phone number',
+                                                                                            'group name'])
+
+                                            if message.replies:
+                                                if message.replies.replies > 0:
+                                                    c_repliers = pd.DataFrame(user_replier_list, columns=['Username', 'Full name',
+                                                                                            'User id', 'Phone number',
+                                                                                            'Group name'])
+                                                    c_replies = pd.DataFrame(replies_list, columns=['To', 'Message ID', 'Reply ID',
+                                                                                 'Display_name', 'ID',
+                                                                                 'Message_text', 'Original_language',
+                                                                                 'Translated_text', 'Translation_confidence',
+                                                                                 'Timestamp'])
+
+                                            if message.replies:
+                                                if message.replies.replies > 0:
+                                                    async for repl in client.iter_messages(message.chat_id,
+                                                                                              reply_to=message.id):
+                                                            user = await client.get_entity(repl.from_id.user_id)
+                                                            userdet = populate_user(user,t)
+                                                            user_replier_list.append(userdet)
+                                                            mss_txt = process_message(repl.text, user_language)
+                                                            replies_list.append([t, message.id,repl.id,
+                                                                                 userdet[1], userdet[2],
+                                                                                 mss_txt["message_text"], mss_txt["original_language"],
+                                                                                 mss_txt["translated_text"],
+                                                                                 mss_txt["translation_confidence"],
+                                                                                 parse_tg_date(repl.date)])
+
                                             display_name = get_display_name(message.sender)
                                             if chat_type != 'Channel':
                                                 substring = "PeerUser"
@@ -740,23 +808,15 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                                                     nameID = str(message.from_id)
                                             else:
                                                 nameID = to_ent.id
-                                            year = str(format(message.date.year, '02d'))
-                                            month = str(format(message.date.month, '02d'))
-                                            day = str(format(message.date.day, '02d'))
-                                            hour = str(format(message.date.hour, '02d'))
-                                            minute = str(format(message.date.minute, '02d'))
-                                            second = str(format(message.date.second, '02d'))
 
-                                            date = year + "-" + month + "-" + day
-                                            mtime = hour + ":" + minute + ":" + second
-                                            timestamp = date + 'T' + mtime + '+00:00'
-
+                                            timestamp = parse_tg_date(message.date)
                                             reply = message.reply_to_msg_id
 
-                                            if message.text is not None:
-                                                message_text = '"' + message.text + '"'
-                                            else:
-                                                message_text = 'none'
+                                            _mess = process_message(message.text, user_language)
+                                            message_text = _mess["message_text"]
+                                            original_language = _mess["original_language"]
+                                            translated_text = _mess["translated_text"]
+                                            translation_confidence = _mess["translation_confidence"]
 
                                             if message.forwards is not None:
                                                 forwards = int(message.forwards)
@@ -768,20 +828,9 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                                             else:
                                                 views = 'Not found'
 
-                                                #translate
-                                            if message_text != 'none':
-                                                translator = Translator()
-                                                detection = translator.detect(message_text)
-                                                language_code = detection.lang
-                                                translation_confidence = detection.confidence
-
-                                                translation = translator.translate(message_text, dest=user_language)
-                                                original_language = translation.src
-                                                translated_text = translation.text
-                                            else:
-                                                original_langauge = user_language
-                                                translated_text = 'n/a'
-                                                translation_confidence = 'n/a'
+                                            if message.reactions:
+                                                if message.reactions.can_see_list:
+                                                    print("#### TODO: REACTIONS")
 
                                             message_list.append([t, message.id,
                                                                  display_name, nameID,
@@ -839,7 +888,6 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                                                         else:
                                                             result = str(ent.title)
 
-
                                                         forwards_list.append([t,to_title,
                                                                               result,f_from_id,
                                                                               username,timestamp])
@@ -870,6 +918,13 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                                     time.sleep(0.5)
                                     bar()
 
+                            if len(replies_list) > 0:
+                                with open(reply_file_archive, 'w+', encoding="utf-8") as rep_file:
+                                    c_replies.to_csv(rep_file, sep=';')
+
+                            if len(user_replier_list) > 0:
+                                with open(reply_memberlist_filename, 'w+', encoding="utf-8") as repliers_file:
+                                    c_repliers.to_csv(repliers_file, sep=';')
 
                             with open(file_archive,'w+', encoding="utf-8") as archive_file:
                                 c_archive.to_csv(archive_file, sep=';')
@@ -983,6 +1038,27 @@ def cli(target,comprehensive,media,forwards,user,location,alt,json,export):
                                   + '  └  Archive saved to: '
                                   + Style.RESET_ALL
                                   + str(file_archive))
+
+                            if len(replies_list) > 0:
+                                middle_char = '├'
+                                if user_replier_list == 0:
+                                    middle_char = '└'
+
+                                print('\n' +Fore.GREEN
+                                      + ' [+] Replies analysis '
+                                      + Style.RESET_ALL)
+                                print(Fore.GREEN
+                                      + '  ┬  Chat statistics'
+                                      + Style.RESET_ALL)
+                                print(Fore.GREEN
+                                      + '  '+middle_char+'  Archive of replies saved to: '
+                                      + Style.RESET_ALL
+                                      + str(reply_file_archive))
+                                if len(user_replier_list) > 0:
+                                    print(Fore.GREEN
+                                          + '  └  Active members list who replied to messages, saved to: '
+                                          + Style.RESET_ALL
+                                          + str(reply_memberlist_filename))
 
 
                             if forwards_check is True:
