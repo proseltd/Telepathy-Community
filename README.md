@@ -130,7 +130,7 @@ In some environments (particularly Windows), Telepathy struggles to effectively 
 Upcoming features include:
 
   - [ ] Adding a time specification flag to set archiving for specific period.
-  - [ ] The ability to archive comments on messages to channels.
+  - [x] The ability to archive comments on messages to channels.
   - [ ] The ability to gather the number of reactions to messages, including statistics on engagement rate.
   - [ ] Finding a method to once again gather complete memberlists (currently restricted by the API).
   - [x] Introducing the ability to scan multiple targets at once.
