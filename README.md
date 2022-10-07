@@ -109,7 +109,14 @@ Exports all chats your account is part of to a CSV file. In a future release, th
 ```
 $ telepathy -e
 ```
+  
+- **'--reply', '-r'**
 
+Flag for enable the reply in the channel, it will map users who replied in the channel and it will dump the full conversation chain 
+
+```
+$ telepathy -t [CHANNEL] -c -r 
+```
 
 
 ## A note on how Telegram works
