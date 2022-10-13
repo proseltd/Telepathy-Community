@@ -1,6 +1,6 @@
 
 
-Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.1.4.
+Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.1.10.
 
 
 ## Installation
@@ -136,13 +136,13 @@ Upcoming features include:
   - [x] Introducing the ability to scan multiple targets at once.
   - [ ] Improved statistics: including timestamp analysis for channels.
   - [ ] Generating an entirely automated complete report, including visualisation for some statistics.
-  - [ ] Making it easier to scan private groups which your account is a member of.
+  - [x] Making it easier to scan private groups which your account is a member of.
   - [ ] Hate speech analytics.
-  - [ ] Clean code, efficiency tweaks.
+  - [x] Clean code, efficiency tweaks.
   - [x] Add user lookup.
   - [x] Add location lookup.
   - [ ] Maximise compatibility of edgelists with Gephi.
-  - [ ] Include sockpuppet account provisioning.
+  - [ ] Include sockpuppet account provisioning (creation of accounts from previous exported lists).
 
 
 ## feedback
@@ -157,6 +157,6 @@ You may use Telepathy however you like, but your usecase is your responsibility.
 
 ## Credits
 
-All tools created by Jordan Wildon (@jordanwildon). A special thanks goes to Alex Newhouse (@AlexBNewhouse) for his help with Telepathy v1.
+All tools created by Jordan Wildon (@jordanwildon). Special thanks go to [Giacomo Giallombardo](https://github.com/aaarghhh) for adding additional features and code refactoring, and Alex Newhouse (@AlexBNewhouse) for his help with Telepathy v1.
 
-Where possible, credit for the use of this tool in published research is desired, but not required. This can either come in the form of crediting the author, or crediting the tool (preferably with a link).
+Where possible, credit for the use of this tool in published research is desired, but not required. This can either come in the form of crediting the author, or crediting Telepathy itself (preferably with a link).
