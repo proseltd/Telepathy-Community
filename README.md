@@ -112,7 +112,7 @@ $ telepathy -e
   
 - **'--reply', '-r'**
 
-Flag for enable the reply in the channel, it will map users who replied in the channel and it will dump the full conversation chain 
+Flag for enable the reply retrieval for the target channel, it will map users who replied in the channel and it will dump the full conversation chain 
 
 ```
 $ telepathy -t [CHANNEL] -c -r 
@@ -147,7 +147,7 @@ Upcoming features include:
 
 ## feedback
 
-Please send feedback to @jordanwildon on Twitter. You can follow Telepathy updates at @TelepathyDB.
+Please send feedback to @jordanwildon on Twitter. You can follow [@TelepathyDB](twitter.com/TelepathyDB) for updates.
 
 
 ## Usage terms
@@ -157,6 +157,6 @@ You may use Telepathy however you like, but your usecase is your responsibility.
 
 ## Credits
 
-All tools created by Jordan Wildon (@jordanwildon). Special thanks go to [Giacomo Giallombardo](https://github.com/aaarghhh) for adding additional features and code refactoring, and Alex Newhouse (@AlexBNewhouse) for his help with Telepathy v1.
+All tools created by Jordan Wildon (@jordanwildon). Special thanks go to [Giacomo Giallombardo](https://github.com/aaarghhh) for adding additional features and code refactoring, and [Alex Newhouse](twitter.com/AlexBNewhouse) for help and guidance with Telepathy v1.
 
 Where possible, credit for the use of this tool in published research is desired, but not required. This can either come in the form of crediting the author, or crediting Telepathy itself (preferably with a link).
