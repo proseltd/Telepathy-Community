@@ -52,7 +52,7 @@ from bs4 import BeautifulSoup
 @click.option(
     "--target",
     "-t",
-    default=" ",
+    #default="",
     multiple=True,
     help="Specifies a chat to investigate.",
 )
@@ -110,10 +110,14 @@ def cli(
     last_date = None
     chunk_size = 1000
     forwards_check = False
+    filetime = datetime.datetime.now().strftime("%Y_%m_%d-%H_%M")
+    filetime_clean = str(filetime)
 
     # Will add more languages later
     user_language = "en"
 
+    if target:
+        basic = True
     if replies:
         reply_analysis = True
     if forwards:
@@ -128,6 +132,8 @@ def cli(
         comp_check = True
     if media:
         media_archive = True
+    if export:
+        t = " "
     if alt:
         alt_check = True
     else:
@@ -172,428 +178,1015 @@ def cli(
 
     client = TelegramClient(phone_number, api_id, api_hash)
 
-    for t in target:
-        target_clean = t
-        alphanumeric = ""
-        filetime = datetime.datetime.now().strftime("%Y_%m_%d-%H_%M")
-        filetime_clean = str(filetime)
+    async def main():
 
-        for character in target_clean:
-            if character.isalnum():
-                alphanumeric += character
-
-        if "https://t.me/+" in t:
-            t = t.replace('https://t.me/+', 'https://t.me/joinchat/')
-
-
-        save_directory = telepathy_file + alphanumeric
-        try:
-            os.makedirs(save_directory)
-        except FileExistsError:
-            pass
-
-        # Creating logfile
-        log_file = telepathy_file + "log.csv"
-
-        # Connecting to the Telegram client and defining options
-        async def main():
-
-            await client.connect()
-            if not await client.is_user_authorized():
-                await client.send_code_request(phone_number)
-                await client.sign_in(phone_number)
-                try:
-                    await client.sign_in(code=input(" Enter code: "))
-                except SessionPasswordNeededError:
-                    await client.sign_in(
-                        password=getpass.getpass(prompt="Password: ", stream=None)
-                    )
-                result = client(
-                    GetDialogsRequest(
-                        offset_date=last_date,
-                        offset_id=0,
-                        offset_peer=InputPeerEmpty(),
-                        limit=chunk_size,
-                        hash=0,
-                    )
+        await client.connect()
+        if not await client.is_user_authorized():
+            await client.send_code_request(phone_number)
+            await client.sign_in(phone_number)
+            try:
+                await client.sign_in(code=input(" Enter code: "))
+            except SessionPasswordNeededError:
+                await client.sign_in(
+                    password=getpass.getpass(prompt="Password: ", stream=None)
                 )
-            else:
+            result = client(
+                GetDialogsRequest(
+                    offset_date=last_date,
+                    offset_id=0,
+                    offset_peer=InputPeerEmpty(),
+                    limit=chunk_size,
+                    hash=0,
+                )
+            )
+        else:
 
-                if media_archive:
-                    media_directory = save_directory + "/media"
+            if export == True:
+                export_file = telepathy_file + "export.csv"
+                exports = []
+
+                print("Exporting...")
+
+                # progress bar
+
+                for Dialog in await client.get_dialogs():
                     try:
-                        os.makedirs(media_directory)
-                    except FileExistsError:
-                        pass
+                        if Dialog.entity.username:
+                            group_url = "http://t.me/" + Dialog.entity.username
+                            group_username = Dialog.entity.username
 
-                if basic == True:
-                    color_print_green(" [!] ", "Performing basic scan")
-                elif comp_check == True:
-                    color_print_green(" [!] ", "Performing comprehensive scan")
-                    file_archive = (
-                        save_directory
-                        + "/"
-                        + alphanumeric
-                        + "_"
-                        + filetime_clean
-                        + "_archive.csv"
-                    )
-                    reply_file_archive = (
-                        save_directory
-                        + "/"
-                        + alphanumeric
-                        + "_"
-                        + filetime_clean
-                        + "_reply_archive.csv"
-                    )
+                            web_req = parse_html_page(group_url)
+                            group_description = web_req["group_description"]
+                            total_participants = web_req["total_participants"]
 
-                if forwards_check == True:
-                    color_print_green(" [!] ", "Forwards will be fetched")
-                    file_forwards = (
-                        save_directory
-                        + "/edgelists/"
-                        + alphanumeric
-                        + "_"
-                        + filetime_clean
-                        + "_edgelist.csv"
-                    )
-                    forward_directory = save_directory + "/edgelists/"
+                            if Dialog.entity.broadcast is True:
+                                chat_type = "Channel"
+                            elif Dialog.entity.megagroup is True:
+                                chat_type = "Megagroup"
+                            elif Dialog.entity.gigagroup is True:
+                                chat_type = "Gigagroup"
+                            else:
+                                chat_type = "Chat"
 
-                    try:
-                        os.makedirs(forward_directory)
-                    except FileExistsError:
-                        pass
+                            if Dialog.entity.restriction_reason is not None:
+                                ios_restriction = Dialog.entity.restriction_reason[
+                                    0
+                                ]
+                                if 1 in Dialog.entity.restriction_reason:
+                                    android_restriction = (
+                                        Dialog.entity.restriction_reason[1]
+                                    )
+                                    group_status = (
+                                        str(ios_restriction)
+                                        + ", "
+                                        + str(android_restriction)
+                                    )
+                                else:
+                                    group_status = str(ios_restriction)
+                            else:
+                                group_status = "None"
 
-                    edgelist_file = (
-                        forward_directory + "/" + alphanumeric + "_edgelist.csv"
-                    )
-
-                if basic is True or comp_check is True:
-
-                    color_print_green(" [-] ", "Fetching details for " + t + "...")
-                    memberlist_directory = save_directory + "/memberlists"
-
-                    try:
-                        os.makedirs(memberlist_directory)
-                    except FileExistsError:
-                        pass
-
-                    memberlist_filename = (
-                        memberlist_directory + "/" + alphanumeric + "_members.csv"
-                    )
-                    reply_memberlist_filename = (
-                        memberlist_directory
-                        + "/"
-                        + alphanumeric
-                        + "_active_members.csv"
-                    )
-
-                    entity = await client.get_entity(t)
-                    first_post = "Not found"
-
-                    async for message in client.iter_messages(t, reverse=True):
-                        datepost = parse_tg_date(message.date)
-                        date = datepost["date"]
-                        mtime = datepost["mtime"]
-                        first_post = datepost["timestamp"]
-                        break
-
-                    if entity.username:
-                        name = entity.title
-                        group_url = "http://t.me/" + entity.username
-                        group_username = entity.username
-                        web_req = parse_html_page(group_url)
-                    elif "https://t.me/" in t:
-                        group_url = t
-                        web_req = parse_html_page(group_url)
-                        group_username = "Private group"
-                    else:
-                        group_url = "Private group"
-                        group_username = "Private group"
-
-
-                    group_description = web_req["group_description"]
-                    total_participants = web_req["total_participants"]
-                    preferredWidth = 70
-                    descript = Fore.GREEN + "Description: " + Style.RESET_ALL + web_req["group_description"]
-                    prefix = descript + " "
-                    wrapper_d = textwrap.TextWrapper(
-                        initial_indent=descript,
-                        width=preferredWidth,
-                        subsequent_indent="                  ",
-                    )
-
-                    if entity.broadcast is True:
-                        chat_type = "Channel"
-                    elif entity.megagroup is True:
-                        chat_type = "Megagroup"
-                    elif entity.gigagroup is True:
-                        chat_type = "Gigagroup"
-                    else:
-                        chat_type = "Chat"
-
-                    if entity.restriction_reason is not None:
-                        ios_restriction = entity.restriction_reason[0]
-                        if 1 in entity.restriction_reason:
-                            android_restriction = entity.restriction_reason[1]
-                            group_status = (
-                                str(ios_restriction) + ", " + str(android_restriction)
+                            exports.append(
+                                [
+                                    filetime,
+                                    Dialog.entity.title,
+                                    group_description,
+                                    total_participants,
+                                    group_username,
+                                    group_url,
+                                    chat_type,
+                                    Dialog.entity.id,
+                                    Dialog.entity.access_hash,
+                                    group_status,
+                                ]
                             )
-                        else:
-                            group_status = str(ios_restriction)
-                    else:
-                        group_status = "None"
 
-                    restrict = Fore.GREEN + "Restrictions:" + Style.RESET_ALL
-                    prefix = restrict + " "
-                    preferredWidth = 70
-                    wrapper_r = textwrap.TextWrapper(
-                        initial_indent=prefix,
-                        width=preferredWidth,
-                        subsequent_indent="                   ",
-                    )
-
-                    if chat_type != "Channel":
-                        members = []
-                        all_participants = []
-                        all_participants = await client.get_participants(t, limit=5000)
-
-                        members_df = None
-                        for user in all_participants:
-                            members_df = pd.DataFrame(
-                                members,
+                            export_df = pd.DataFrame(
+                                exports,
                                 columns=[
-                                    "username",
-                                    "full name",
-                                    "user id",
-                                    "phone number",
-                                    "group name",
+                                    "Access Date",
+                                    "Title",
+                                    "Description",
+                                    "Total participants",
+                                    "Username",
+                                    "URL",
+                                    "Chat type",
+                                    "Chat ID",
+                                    "Access hash",
+                                    "Restrictions",
                                 ],
                             )
-                            members.append(populate_user(user, t))
 
-                        if members_df is not None:
-                            with open(
-                                memberlist_filename, "w+", encoding="utf-8"
-                            ) as save_members:
-                                members_df.to_csv(save_members, sep=";")
-
-                            if json_check == True:
-                                members_df.to_json(
-                                    json_file + alphanumeric + "_memberlist.json",
-                                    orient="records",
-                                    compression="infer",
-                                    lines=True,
-                                    index=True,
-                                )
+                            if not os.path.isfile(export_file):
+                                export_df.to_csv(export_file, sep=";", index=False)
                             else:
-                                pass
+                                export_df.to_csv(
+                                    export_file, sep=";", mode="w", index=False
+                                )
 
-                        found_participants = len(all_participants)
-                        found_participants = int(found_participants)
-                        found_percentage = (
-                            int(found_participants) / int(total_participants) * 100
-                        )
-
-                    log = []
-
-                    if chat_type != "Channel":
-                        print("\n")
-                        color_print_green(" [+] Memberlist fetched", "")
-                    else:
+                    except AttributeError:
                         pass
 
-                    color_print_green("  ┬  Chat details", "")
-                    color_print_green("  ├  Title: ", str(entity.title))
-                    color_print_green("  ├  ", wrapper_d.fill(group_description))
-                    color_print_green(
-                        "  ├  Total participants: ", str(total_participants)
-                    )
+            else:
 
-                    if chat_type != "Channel":
+                for t in target:
+                    target_clean = t
+                    alphanumeric = ""
+                    
+
+                    for character in target_clean:
+                        if character.isalnum():
+                            alphanumeric += character
+
+                    if "https://t.me/+" in t:
+                        t = t.replace('https://t.me/+', 'https://t.me/joinchat/')
+
+
+                    save_directory = telepathy_file + alphanumeric
+                    try:
+                        os.makedirs(save_directory)
+                    except FileExistsError:
+                        pass
+
+                    # Creating logfile
+                    log_file = telepathy_file + "log.csv"
+
+                    if media_archive:
+                        media_directory = save_directory + "/media"
+                        try:
+                            os.makedirs(media_directory)
+                        except FileExistsError:
+                            pass
+
+                    if basic == True:
+                        color_print_green(" [!] ", "Performing basic scan")
+                    elif comp_check == True:
+                        color_print_green(" [!] ", "Performing comprehensive scan")
+                        file_archive = (
+                            save_directory
+                            + "/"
+                            + alphanumeric
+                            + "_"
+                            + filetime_clean
+                            + "_archive.csv"
+                        )
+                        reply_file_archive = (
+                            save_directory
+                            + "/"
+                            + alphanumeric
+                            + "_"
+                            + filetime_clean
+                            + "_reply_archive.csv"
+                        )
+
+                    if forwards_check == True:
+                        color_print_green(" [!] ", "Forwards will be fetched")
+                        file_forwards = (
+                            save_directory
+                            + "/edgelists/"
+                            + alphanumeric
+                            + "_"
+                            + filetime_clean
+                            + "_edgelist.csv"
+                        )
+                        forward_directory = save_directory + "/edgelists/"
+
+                        try:
+                            os.makedirs(forward_directory)
+                        except FileExistsError:
+                            pass
+
+                        edgelist_file = (
+                            forward_directory + "/" + alphanumeric + "_edgelist.csv"
+                        )
+
+                    if basic is True or comp_check is True:
+
+                        color_print_green(" [-] ", "Fetching details for " + t + "...")
+                        memberlist_directory = save_directory + "/memberlists"
+
+                        try:
+                            os.makedirs(memberlist_directory)
+                        except FileExistsError:
+                            pass
+
+                        memberlist_filename = (
+                            memberlist_directory + "/" + alphanumeric + "_members.csv"
+                        )
+                        reply_memberlist_filename = (
+                            memberlist_directory
+                            + "/"
+                            + alphanumeric
+                            + "_active_members.csv"
+                        )
+
+                        entity = await client.get_entity(t)
+                        first_post = "Not found"
+
+                        async for message in client.iter_messages(t, reverse=True):
+                            datepost = parse_tg_date(message.date)
+                            date = datepost["date"]
+                            mtime = datepost["mtime"]
+                            first_post = datepost["timestamp"]
+                            break
+
+                        if entity.username:
+                            name = entity.title
+                            group_url = "http://t.me/" + entity.username
+                            group_username = entity.username
+                            web_req = parse_html_page(group_url)
+                        elif "https://t.me/" in t:
+                            group_url = t
+                            web_req = parse_html_page(group_url)
+                            group_username = "Private group"
+                        else:
+                            group_url = "Private group"
+                            group_username = "Private group"
+
+
+                        group_description = web_req["group_description"]
+                        total_participants = web_req["total_participants"]
+                        preferredWidth = 70
+                        descript = Fore.GREEN + "Description: " + Style.RESET_ALL + web_req["group_description"]
+                        prefix = descript + " "
+                        wrapper_d = textwrap.TextWrapper(
+                            initial_indent=descript,
+                            width=preferredWidth,
+                            subsequent_indent="                  ",
+                        )
+
+                        if entity.broadcast is True:
+                            chat_type = "Channel"
+                        elif entity.megagroup is True:
+                            chat_type = "Megagroup"
+                        elif entity.gigagroup is True:
+                            chat_type = "Gigagroup"
+                        else:
+                            chat_type = "Chat"
+
+                        if entity.restriction_reason is not None:
+                            ios_restriction = entity.restriction_reason[0]
+                            if 1 in entity.restriction_reason:
+                                android_restriction = entity.restriction_reason[1]
+                                group_status = (
+                                    str(ios_restriction) + ", " + str(android_restriction)
+                                )
+                            else:
+                                group_status = str(ios_restriction)
+                        else:
+                            group_status = "None"
+
+                        restrict = Fore.GREEN + "Restrictions:" + Style.RESET_ALL
+                        prefix = restrict + " "
+                        preferredWidth = 70
+                        wrapper_r = textwrap.TextWrapper(
+                            initial_indent=prefix,
+                            width=preferredWidth,
+                            subsequent_indent="                   ",
+                        )
+
+                        if chat_type != "Channel":
+                            members = []
+                            all_participants = []
+                            all_participants = await client.get_participants(t, limit=5000)
+
+                            members_df = None
+                            for user in all_participants:
+                                members_df = pd.DataFrame(
+                                    members,
+                                    columns=[
+                                        "username",
+                                        "full name",
+                                        "user id",
+                                        "phone number",
+                                        "group name",
+                                    ],
+                                )
+                                members.append(populate_user(user, t))
+
+                            if members_df is not None:
+                                with open(
+                                    memberlist_filename, "w+", encoding="utf-8"
+                                ) as save_members:
+                                    members_df.to_csv(save_members, sep=";")
+
+                                if json_check == True:
+                                    members_df.to_json(
+                                        json_file + alphanumeric + "_memberlist.json",
+                                        orient="records",
+                                        compression="infer",
+                                        lines=True,
+                                        index=True,
+                                    )
+                                else:
+                                    pass
+
+                            found_participants = len(all_participants)
+                            found_participants = int(found_participants)
+                            found_percentage = (
+                                int(found_participants) / int(total_participants) * 100
+                            )
+
+                        log = []
+
+                        if chat_type != "Channel":
+                            print("\n")
+                            color_print_green(" [+] Memberlist fetched", "")
+                        else:
+                            pass
+
+                        color_print_green("  ┬  Chat details", "")
+                        color_print_green("  ├  Title: ", str(entity.title))
+                        color_print_green("  ├  ", wrapper_d.fill(group_description))
                         color_print_green(
-                            "  ├  Participants found: ",
-                            str(found_participants)
-                            + " ("
-                            + str(format(found_percentage, ".2f"))
-                            + "%)",
+                            "  ├  Total participants: ", str(total_participants)
                         )
-                    else:
-                        found_participants = "N/A"
 
-                    color_print_green("  ├  Username: ", str(group_username))
-                    color_print_green("  ├  URL: ", str(group_url))
-                    color_print_green("  ├  Chat type: ", str(chat_type))
-                    color_print_green("  ├  Chat id: ", str(entity.id))
-                    color_print_green("  ├  Access hash: ", str(entity.access_hash))
+                        if chat_type != "Channel":
+                            color_print_green(
+                                "  ├  Participants found: ",
+                                str(found_participants)
+                                + " ("
+                                + str(format(found_percentage, ".2f"))
+                                + "%)",
+                            )
+                        else:
+                            found_participants = "N/A"
 
-                    if chat_type == "Channel":
-                        scam_status = str(entity.scam)
-                        color_print_green("  ├  Scam: ", str(scam_status))
-                    else:
-                        scam_status = "N/A"
+                        color_print_green("  ├  Username: ", str(group_username))
+                        color_print_green("  ├  URL: ", str(group_url))
+                        color_print_green("  ├  Chat type: ", str(chat_type))
+                        color_print_green("  ├  Chat id: ", str(entity.id))
+                        color_print_green("  ├  Access hash: ", str(entity.access_hash))
 
-                    color_print_green("  ├  First post date: ", str(first_post))
+                        if chat_type == "Channel":
+                            scam_status = str(entity.scam)
+                            color_print_green("  ├  Scam: ", str(scam_status))
+                        else:
+                            scam_status = "N/A"
 
-                    if chat_type != "Channel":
+                        color_print_green("  ├  First post date: ", str(first_post))
+
+                        if chat_type != "Channel":
+                            color_print_green(
+                                "  ├  Memberlist saved to: ", memberlist_filename
+                            )
+
                         color_print_green(
-                            "  ├  Memberlist saved to: ", memberlist_filename
+                            "  └  ", wrapper_r.fill(group_status)
+                        )
+                        print("\n")
+
+                        log.append(
+                            [
+                                filetime,
+                                entity.title,
+                                group_description,
+                                total_participants,
+                                found_participants,
+                                group_username,
+                                group_url,
+                                chat_type,
+                                entity.id,
+                                entity.access_hash,
+                                scam_status,
+                                date,
+                                mtime,
+                                group_status,
+                            ]
                         )
 
-                    color_print_green(
-                        "  └  ", wrapper_r.fill(group_status)
-                    )
-                    print("\n")
-
-                    log.append(
-                        [
-                            filetime,
-                            entity.title,
-                            group_description,
-                            total_participants,
-                            found_participants,
-                            group_username,
-                            group_url,
-                            chat_type,
-                            entity.id,
-                            entity.access_hash,
-                            scam_status,
-                            date,
-                            mtime,
-                            group_status,
-                        ]
-                    )
-
-                    log_df = pd.DataFrame(
-                        log,
-                        columns=[
-                            "Access Date",
-                            "Title",
-                            "Description",
-                            "Total participants",
-                            "Participants found",
-                            "Username",
-                            "URL",
-                            "Chat type",
-                            "Chat ID",
-                            "Access hash",
-                            "Scam",
-                            "First post date",
-                            "First post time (UTC)",
-                            "Restrictions",
-                        ],
-                    )
-
-                    if not os.path.isfile(log_file):
-                        log_df.to_csv(log_file, sep=";", index=False)
-                    else:
-                        log_df.to_csv(
-                            log_file, sep=";", mode="a", index=False, header=False
-                        )
-
-                    if forwards_check is True and comp_check is False:
-                        color_print_green(
-                            " [-] ", "Calculating number of forwarded messages..."
-                        )
-                        forwards_list = []
-                        forward_count = 0
-                        private_count = 0
-                        to_ent = await client.get_entity(t)
-                        to_title = to_ent.title
-
-                        forwards_df = pd.DataFrame(
-                            forwards_list,
+                        log_df = pd.DataFrame(
+                            log,
                             columns=[
-                                "To",
-                                "To_title",
-                                "From",
-                                "From_ID",
+                                "Access Date",
+                                "Title",
+                                "Description",
+                                "Total participants",
+                                "Participants found",
                                 "Username",
-                                "Timestamp",
+                                "URL",
+                                "Chat type",
+                                "Chat ID",
+                                "Access hash",
+                                "Scam",
+                                "First post date",
+                                "First post time (UTC)",
+                                "Restrictions",
                             ],
                         )
 
-                        async for message in client.iter_messages(t):
-                            if message.forward is not None:
-                                forward_count += 1
+                        if not os.path.isfile(log_file):
+                            log_df.to_csv(log_file, sep=";", index=False)
+                        else:
+                            log_df.to_csv(
+                                log_file, sep=";", mode="a", index=False, header=False
+                            )
 
-                        print("\n")
-                        color_print_green(" [-] ", "Fetching forwarded messages...")
+                        if forwards_check is True and comp_check is False:
+                            color_print_green(
+                                " [-] ", "Calculating number of forwarded messages..."
+                            )
+                            forwards_list = []
+                            forward_count = 0
+                            private_count = 0
+                            to_ent = await client.get_entity(t)
+                            to_title = to_ent.title
 
-                        progress_bar = (
-                            Fore.GREEN + " [-] " + Style.RESET_ALL + "Progress: "
-                        )
-
-                        with alive_bar(
-                            forward_count, dual_line=True, title=progress_bar, length=20
-                        ) as bar:
+                            forwards_df = pd.DataFrame(
+                                forwards_list,
+                                columns=[
+                                    "To",
+                                    "To_title",
+                                    "From",
+                                    "From_ID",
+                                    "Username",
+                                    "Timestamp",
+                                ],
+                            )
 
                             async for message in client.iter_messages(t):
                                 if message.forward is not None:
-                                    try:
-                                        f_from_id = message.forward.original_fwd.from_id
-                                        if f_from_id is not None:
-                                            ent = await client.get_entity(f_from_id)
-                                            username = ent.username
-                                            timestamp = parse_tg_date(message.date)[
-                                                "timestamp"
-                                            ]
+                                    forward_count += 1
 
-                                            substring = "PeerUser"
-                                            string = str(f_from_id)
-                                            if substring in string:
-                                                user_id = re.sub("[^0-9]", "", string)
-                                                user_id = await client.get_entity(
-                                                    PeerUser(int(user_id))
-                                                )
-                                                user_id = str(user_id)
-                                                result = (
-                                                    "User: "
-                                                    + str(ent.first_name)
-                                                    + " / ID: "
-                                                    + str(user_id.id)
-                                                )
-                                            else:
-                                                result = str(ent.title)
+                            print("\n")
+                            color_print_green(" [-] ", "Fetching forwarded messages...")
 
-                                            forwards_df = pd.DataFrame(
-                                                forwards_list,
-                                                columns=[
-                                                    "To username",
-                                                    "To name",
-                                                    "From",
-                                                    "From ID",
-                                                    "From_username",
-                                                    "Timestamp",
-                                                ],
+                            progress_bar = (
+                                Fore.GREEN + " [-] " + Style.RESET_ALL + "Progress: "
+                            )
+
+                            with alive_bar(
+                                forward_count, dual_line=True, title=progress_bar, length=20
+                            ) as bar:
+
+                                async for message in client.iter_messages(t):
+                                    if message.forward is not None:
+                                        try:
+                                            f_from_id = message.forward.original_fwd.from_id
+                                            if f_from_id is not None:
+                                                ent = await client.get_entity(f_from_id)
+                                                username = ent.username
+                                                timestamp = parse_tg_date(message.date)[
+                                                    "timestamp"
+                                                ]
+
+                                                substring = "PeerUser"
+                                                string = str(f_from_id)
+                                                if substring in string:
+                                                    user_id = re.sub("[^0-9]", "", string)
+                                                    user_id = await client.get_entity(
+                                                        PeerUser(int(user_id))
+                                                    )
+                                                    user_id = str(user_id)
+                                                    result = (
+                                                        "User: "
+                                                        + str(ent.first_name)
+                                                        + " / ID: "
+                                                        + str(user_id.id)
+                                                    )
+                                                else:
+                                                    result = str(ent.title)
+
+                                                forwards_df = pd.DataFrame(
+                                                    forwards_list,
+                                                    columns=[
+                                                        "To username",
+                                                        "To name",
+                                                        "From",
+                                                        "From ID",
+                                                        "From_username",
+                                                        "Timestamp",
+                                                    ],
+                                                )
+
+                                                forwards_list.append(
+                                                    [
+                                                        t,
+                                                        to_title,
+                                                        result,
+                                                        f_from_id,
+                                                        username,
+                                                        timestamp,
+                                                    ]
+                                                )
+
+                                        except Exception as e:
+                                            if e is ChannelPrivateError:
+                                                print("Private channel")
+                                            continue
+
+                                        time.sleep(0.5)
+                                        bar()
+
+                                        with open(
+                                            edgelist_file, "w+", encoding="utf-8"
+                                        ) as save_forwards:
+                                            forwards_df.to_csv(save_forwards, sep=";")
+
+                                        if json_check == True:
+                                            forwards_df.to_json(
+                                                json_file + alphanumeric + "_edgelist.json",
+                                                orient="records",
+                                                compression="infer",
+                                                lines=True,
+                                                index=True,
                                             )
+                                        else:
+                                            pass
 
-                                            forwards_list.append(
+                            if forward_count >= 15:
+                                forwards_found = forwards_df.From.count()
+                                value_count = forwards_df["From"].value_counts()
+                                df01 = value_count.rename_axis("unique_values").reset_index(
+                                    name="counts"
+                                )
+
+                                top_forward_one = df01.iloc[0]["unique_values"]
+                                top_value_one = df01.iloc[0]["counts"]
+                                top_forward_two = df01.iloc[1]["unique_values"]
+                                top_value_two = df01.iloc[1]["counts"]
+                                top_forward_three = df01.iloc[2]["unique_values"]
+                                top_value_three = df01.iloc[2]["counts"]
+                                top_forward_four = df01.iloc[3]["unique_values"]
+                                top_value_four = df01.iloc[3]["counts"]
+                                top_forward_five = df01.iloc[4]["unique_values"]
+                                top_value_five = df01.iloc[4]["counts"]
+
+                                forward_one = (
+                                    str(top_forward_one)
+                                    + ", "
+                                    + str(top_value_one)
+                                    + " forwarded messages"
+                                )
+                                forward_two = (
+                                    str(top_forward_two)
+                                    + ", "
+                                    + str(top_value_two)
+                                    + " forwarded messages"
+                                )
+                                forward_three = (
+                                    str(top_forward_three)
+                                    + ", "
+                                    + str(top_value_three)
+                                    + " forwarded messages"
+                                )
+                                forward_four = (
+                                    str(top_forward_four)
+                                    + ", "
+                                    + str(top_value_four)
+                                    + " forwarded messages"
+                                )
+                                forward_five = (
+                                    str(top_forward_five)
+                                    + ", "
+                                    + str(top_value_five)
+                                    + " forwarded messages"
+                                )
+
+                                df02 = forwards_df.From.unique()
+                                unique_forwards = len(df02)
+
+                                print("\n")
+                                color_print_green(" [+] Forward scrape complete", "")
+                                color_print_green("  ┬  Statistics", "")
+                                color_print_green(
+                                    "  ├  Forwarded messages found: ", str(forward_count)
+                                )
+                                color_print_green(
+                                    "  ├  Forwards from active public chats: ",
+                                    str(forwards_found),
+                                )
+                                color_print_green(
+                                    "  ├  Unique forward sources: ", str(unique_forwards)
+                                )
+                                color_print_green(
+                                    "  ├  Top forward source 1: ", str(forward_one)
+                                )
+                                color_print_green(
+                                    "  ├  Top forward source 2: ", str(forward_two)
+                                )
+                                color_print_green(
+                                    "  ├  Top forward source 3: ", str(forward_three)
+                                )
+                                color_print_green(
+                                    "  ├  Top forward source 4: ", str(forward_four)
+                                )
+                                color_print_green(
+                                    "  ├  Top forward source 5: ", str(forward_five)
+                                )
+                                color_print_green("  └  Edgelist saved to: ", edgelist_file)
+                                print("\n")
+
+                            else:
+                                print(
+                                    "\n"
+                                    + Fore.GREEN
+                                    + " [!] Insufficient forwarded messages found"
+                                    + Style.RESET_ALL
+                                )
+
+                        else:
+
+                            if comp_check is True:
+
+                                messages = client.iter_messages(t)
+
+                                message_list = []
+                                forwards_list = []
+
+                                user_reaction_list = []
+
+                                replies_list = []
+                                user_replier_list = []
+
+                                timecount = []
+
+                                forward_count = 0
+                                private_count = 0
+
+                                if media_archive is True:
+                                    color_print_green(
+                                        " [!] ", "Media content will be archived"
+                                    )
+
+                                print("\n")
+                                color_print_green(
+                                    " [!] ", "Calculating number of messages..."
+                                )
+
+                                message_count = 0
+
+                                async for message in messages:
+                                    if message is not None:
+                                        message_count += 1
+
+                                print("\n")
+                                color_print_green(" [-] ", "Fetching message archive...")
+                                progress_bar = (
+                                    Fore.GREEN + " [-] " + Style.RESET_ALL + "Progress: "
+                                )
+
+                                with alive_bar(
+                                    message_count,
+                                    dual_line=True,
+                                    title=progress_bar,
+                                    length=20,
+                                ) as bar:
+
+                                    to_ent = await client.get_entity(t)
+
+                                    async for message in client.iter_messages(
+                                        t, limit=None
+                                    ):
+                                        if message is not None:
+
+                                            try:
+
+                                                c_archive = pd.DataFrame(
+                                                    message_list,
+                                                    columns=[
+                                                        "To",
+                                                        "Message ID",
+                                                        "Display_name",
+                                                        "ID",
+                                                        "Message_text",
+                                                        "Original_language",
+                                                        "Translated_text",
+                                                        "Translation_confidence",
+                                                        "Timestamp",
+                                                        "Reply",
+                                                        "Views",
+                                                    ],
+                                                )
+
+                                                c_forwards = pd.DataFrame(
+                                                    forwards_list,
+                                                    columns=[
+                                                        "To",
+                                                        "To_title",
+                                                        "From",
+                                                        "From_ID",
+                                                        "Username",
+                                                        "Timestamp",
+                                                    ],
+                                                )
+
+                                                if message.reactions:
+                                                    if message.reactions.can_see_list:
+                                                        c_reactioneer = pd.DataFrame(
+                                                            user_reaction_list,
+                                                            columns=[
+                                                                "username",
+                                                                "full name",
+                                                                "user id",
+                                                                "phone number",
+                                                                "group name",
+                                                            ],
+                                                        )
+
+                                                if (
+                                                    message.replies
+                                                    and reply_analysis
+                                                    and chat_type == "Channel"
+                                                ):
+                                                    if message.replies.replies > 0:
+                                                        c_repliers = pd.DataFrame(
+                                                            user_replier_list,
+                                                            columns=[
+                                                                "Username",
+                                                                "Full name",
+                                                                "User id",
+                                                                "Phone number",
+                                                                "Group name",
+                                                            ],
+                                                        )
+                                                        c_replies = pd.DataFrame(
+                                                            replies_list,
+                                                            columns=[
+                                                                "To",
+                                                                "Message ID",
+                                                                "Reply ID",
+                                                                "Display_name",
+                                                                "ID",
+                                                                "Message_text",
+                                                                "Original_language",
+                                                                "Translated_text",
+                                                                "Translation_confidence",
+                                                                "Timestamp",
+                                                            ],
+                                                        )
+
+                                                if message.replies:
+                                                    if message.replies.replies > 0:
+                                                        async for repl in client.iter_messages(
+                                                            message.chat_id,
+                                                            reply_to=message.id,
+                                                        ):
+                                                            user = await client.get_entity(
+                                                                repl.from_id.user_id
+                                                            )
+                                                            userdet = populate_user(user, t)
+                                                            user_replier_list.append(
+                                                                userdet
+                                                            )
+                                                            mss_txt = process_message(
+                                                                repl.text, user_language
+                                                            )
+                                                            replies_list.append(
+                                                                [
+                                                                    t,
+                                                                    message.id,
+                                                                    repl.id,
+                                                                    userdet[1],
+                                                                    userdet[2],
+                                                                    mss_txt["message_text"],
+                                                                    mss_txt[
+                                                                        "original_language"
+                                                                    ],
+                                                                    mss_txt[
+                                                                        "translated_text"
+                                                                    ],
+                                                                    mss_txt[
+                                                                        "translation_confidence"
+                                                                    ],
+                                                                    parse_tg_date(
+                                                                        repl.date
+                                                                    )["timestamp"],
+                                                                ]
+                                                            )
+
+                                                display_name = get_display_name(
+                                                    message.sender
+                                                )
+                                                if chat_type != "Channel":
+                                                    substring = "PeerUser"
+                                                    string = str(message.from_id)
+                                                    if substring in string:
+                                                        user_id = re.sub(
+                                                            "[^0-9]", "", string
+                                                        )
+                                                        nameID = str(user_id)
+                                                    else:
+                                                        nameID = str(message.from_id)
+                                                else:
+                                                    nameID = to_ent.id
+
+                                                timestamp = parse_tg_date(message.date)[
+                                                    "timestamp"
+                                                ]
+                                                reply = message.reply_to_msg_id
+
+                                                _mess = process_message(
+                                                    message.text, user_language
+                                                )
+                                                message_text = _mess["message_text"]
+                                                original_language = _mess[
+                                                    "original_language"
+                                                ]
+                                                translated_text = _mess["translated_text"]
+                                                translation_confidence = _mess[
+                                                    "translation_confidence"
+                                                ]
+
+                                                if message.forwards is not None:
+                                                    forwards = int(message.forwards)
+                                                else:
+                                                    forwards = "None"
+
+                                                if message.views is not None:
+                                                    views = int(message.views)
+                                                else:
+                                                    views = "Not found"
+
+                                                if message.reactions:
+                                                    if message.reactions.can_see_list:
+                                                        print("#### TODO: REACTIONS")
+
+                                                message_list.append(
+                                                    [
+                                                        t,
+                                                        message.id,
+                                                        display_name,
+                                                        nameID,
+                                                        message_text,
+                                                        original_language,
+                                                        translated_text,
+                                                        translation_confidence,
+                                                        timestamp,
+                                                        reply,
+                                                        views,
+                                                    ]
+                                                )
+
+                                                if message.forward is not None:
+                                                    forward_verify = True
+                                                    try:
+                                                        forward_count += 1
+                                                        to_title = to_ent.title
+                                                        f_from_id = (
+                                                            message.forward.original_fwd.from_id
+                                                        )
+
+                                                        if f_from_id is not None:
+                                                            ent = await client.get_entity(
+                                                                f_from_id
+                                                            )
+                                                            user_string = "user_id"
+                                                            channel_string = "broadcast"
+
+                                                            if user_string in str(ent):
+                                                                ent_type = "User"
+                                                            else:
+                                                                if channel_string in str(
+                                                                    ent
+                                                                ):
+                                                                    if (
+                                                                        ent.broadcast
+                                                                        is True
+                                                                    ):
+                                                                        ent_type = "Channel"
+                                                                    elif (
+                                                                        ent.megagroup
+                                                                        is True
+                                                                    ):
+                                                                        ent_type = (
+                                                                            "Megagroup"
+                                                                        )
+                                                                    elif (
+                                                                        ent.gigagroup
+                                                                        is True
+                                                                    ):
+                                                                        ent_type = (
+                                                                            "Gigagroup"
+                                                                        )
+                                                                    else:
+                                                                        ent_type = "Chat"
+                                                                else:
+                                                                    continue
+
+                                                            if ent.username is not None:
+                                                                username = ent.username
+                                                            else:
+                                                                username = "none"
+
+                                                            if ent_type != "Chat":
+                                                                result = str(ent.title)
+                                                            else:
+                                                                result = "none"
+
+                                                            if ent_type == "User":
+                                                                substring_1 = "PeerUser"
+                                                                string_1 = str(ent.user_id)
+                                                                if substring_1 in string_1:
+                                                                    user_id = re.sub(
+                                                                        "[^0-9]",
+                                                                        "",
+                                                                        string_1,
+                                                                    )
+                                                                    user_id = await client.get_entity(
+                                                                        PeerUser(
+                                                                            int(user_id)
+                                                                        )
+                                                                    )
+                                                                    user_id = str(user_id)
+                                                                    result = (
+                                                                        "User: "
+                                                                        + str(
+                                                                            ent.first_name
+                                                                        )
+                                                                        + " / ID: "
+                                                                        + str(user_id)
+                                                                    )
+                                                                else:
+                                                                    result = str(ent.title)
+                                                            else:
+                                                                result = str(ent.title)
+
+                                                            forwards_list.append(
+                                                                [
+                                                                    t,
+                                                                    to_title,
+                                                                    result,
+                                                                    f_from_id,
+                                                                    username,
+                                                                    timestamp,
+                                                                ]
+                                                            )
+
+                                                        if media_archive == True:
+                                                            if message.media:
+                                                                path = await message.download_media(
+                                                                    file=media_directory
+                                                                )
+                                                            else:
+                                                                pass
+
+                                                    except ChannelPrivateError:
+                                                        private_count += 1
+                                                        continue
+
+                                                    except Exception as e:
+                                                        print("An exception occurred.", e)
+                                                        continue
+
+                                            except Exception as e:
+                                                print("An exception occurred.", e)
+
+                                        else:
+                                            message_list.append(
                                                 [
-                                                    t,
-                                                    to_title,
-                                                    result,
-                                                    f_from_id,
-                                                    username,
-                                                    timestamp,
+                                                    "None",
+                                                    "None",
+                                                    "None",
+                                                    "None",
+                                                    "None",
+                                                    "None",
+                                                    "None",
+                                                    "None",
                                                 ]
                                             )
+                                            pass
 
-                                    except Exception as e:
-                                        if e is ChannelPrivateError:
-                                            print("Private channel")
-                                        continue
+                                        time.sleep(0.5)
+                                        bar()
 
-                                    time.sleep(0.5)
-                                    bar()
-
+                                if len(replies_list) > 0:
                                     with open(
-                                        edgelist_file, "w+", encoding="utf-8"
-                                    ) as save_forwards:
-                                        forwards_df.to_csv(save_forwards, sep=";")
+                                        reply_file_archive, "w+", encoding="utf-8"
+                                    ) as rep_file:
+                                        c_replies.to_csv(rep_file, sep=";")
+
+                                if len(user_replier_list) > 0:
+                                    with open(
+                                        reply_memberlist_filename, "w+", encoding="utf-8"
+                                    ) as repliers_file:
+                                        c_repliers.to_csv(repliers_file, sep=";")
+
+                                with open(
+                                    file_archive, "w+", encoding="utf-8"
+                                ) as archive_file:
+                                    c_archive.to_csv(archive_file, sep=";")
+
+                                if json_check == True:
+                                    c_archive.to_json(
+                                        json_file + alphanumeric + "_archive.json",
+                                        orient="records",
+                                        compression="infer",
+                                        lines=True,
+                                        index=True,
+                                    )
+                                else:
+                                    pass
+
+                                if forwards_check is True:
+                                    with open(
+                                        file_forwards, "w+", encoding="utf-8"
+                                    ) as forwards_file:
+                                        c_forwards.to_csv(forwards_file, sep=";")
 
                                     if json_check == True:
-                                        forwards_df.to_json(
+                                        c_forwards.to_json(
                                             json_file + alphanumeric + "_edgelist.json",
                                             orient="records",
                                             compression="infer",
@@ -602,998 +1195,413 @@ def cli(
                                         )
                                     else:
                                         pass
-
-                        if forward_count >= 15:
-                            forwards_found = forwards_df.From.count()
-                            value_count = forwards_df["From"].value_counts()
-                            df01 = value_count.rename_axis("unique_values").reset_index(
-                                name="counts"
-                            )
-
-                            top_forward_one = df01.iloc[0]["unique_values"]
-                            top_value_one = df01.iloc[0]["counts"]
-                            top_forward_two = df01.iloc[1]["unique_values"]
-                            top_value_two = df01.iloc[1]["counts"]
-                            top_forward_three = df01.iloc[2]["unique_values"]
-                            top_value_three = df01.iloc[2]["counts"]
-                            top_forward_four = df01.iloc[3]["unique_values"]
-                            top_value_four = df01.iloc[3]["counts"]
-                            top_forward_five = df01.iloc[4]["unique_values"]
-                            top_value_five = df01.iloc[4]["counts"]
-
-                            forward_one = (
-                                str(top_forward_one)
-                                + ", "
-                                + str(top_value_one)
-                                + " forwarded messages"
-                            )
-                            forward_two = (
-                                str(top_forward_two)
-                                + ", "
-                                + str(top_value_two)
-                                + " forwarded messages"
-                            )
-                            forward_three = (
-                                str(top_forward_three)
-                                + ", "
-                                + str(top_value_three)
-                                + " forwarded messages"
-                            )
-                            forward_four = (
-                                str(top_forward_four)
-                                + ", "
-                                + str(top_value_four)
-                                + " forwarded messages"
-                            )
-                            forward_five = (
-                                str(top_forward_five)
-                                + ", "
-                                + str(top_value_five)
-                                + " forwarded messages"
-                            )
-
-                            df02 = forwards_df.From.unique()
-                            unique_forwards = len(df02)
-
-                            print("\n")
-                            color_print_green(" [+] Forward scrape complete", "")
-                            color_print_green("  ┬  Statistics", "")
-                            color_print_green(
-                                "  ├  Forwarded messages found: ", str(forward_count)
-                            )
-                            color_print_green(
-                                "  ├  Forwards from active public chats: ",
-                                str(forwards_found),
-                            )
-                            color_print_green(
-                                "  ├  Unique forward sources: ", str(unique_forwards)
-                            )
-                            color_print_green(
-                                "  ├  Top forward source 1: ", str(forward_one)
-                            )
-                            color_print_green(
-                                "  ├  Top forward source 2: ", str(forward_two)
-                            )
-                            color_print_green(
-                                "  ├  Top forward source 3: ", str(forward_three)
-                            )
-                            color_print_green(
-                                "  ├  Top forward source 4: ", str(forward_four)
-                            )
-                            color_print_green(
-                                "  ├  Top forward source 5: ", str(forward_five)
-                            )
-                            color_print_green("  └  Edgelist saved to: ", edgelist_file)
-                            print("\n")
-
-                        else:
-                            print(
-                                "\n"
-                                + Fore.GREEN
-                                + " [!] Insufficient forwarded messages found"
-                                + Style.RESET_ALL
-                            )
-
-                    else:
-
-                        if comp_check is True:
-
-                            messages = client.iter_messages(t)
-
-                            message_list = []
-                            forwards_list = []
-
-                            user_reaction_list = []
-
-                            replies_list = []
-                            user_replier_list = []
-
-                            timecount = []
-
-                            forward_count = 0
-                            private_count = 0
-
-                            if media_archive is True:
-                                color_print_green(
-                                    " [!] ", "Media content will be archived"
-                                )
-
-                            print("\n")
-                            color_print_green(
-                                " [!] ", "Calculating number of messages..."
-                            )
-
-                            message_count = 0
-
-                            async for message in messages:
-                                if message is not None:
-                                    message_count += 1
-
-                            print("\n")
-                            color_print_green(" [-] ", "Fetching message archive...")
-                            progress_bar = (
-                                Fore.GREEN + " [-] " + Style.RESET_ALL + "Progress: "
-                            )
-
-                            with alive_bar(
-                                message_count,
-                                dual_line=True,
-                                title=progress_bar,
-                                length=20,
-                            ) as bar:
-
-                                to_ent = await client.get_entity(t)
-
-                                async for message in client.iter_messages(
-                                    t, limit=None
-                                ):
-                                    if message is not None:
-
-                                        try:
-
-                                            c_archive = pd.DataFrame(
-                                                message_list,
-                                                columns=[
-                                                    "To",
-                                                    "Message ID",
-                                                    "Display_name",
-                                                    "ID",
-                                                    "Message_text",
-                                                    "Original_language",
-                                                    "Translated_text",
-                                                    "Translation_confidence",
-                                                    "Timestamp",
-                                                    "Reply",
-                                                    "Views",
-                                                ],
-                                            )
-
-                                            c_forwards = pd.DataFrame(
-                                                forwards_list,
-                                                columns=[
-                                                    "To",
-                                                    "To_title",
-                                                    "From",
-                                                    "From_ID",
-                                                    "Username",
-                                                    "Timestamp",
-                                                ],
-                                            )
-
-                                            if message.reactions:
-                                                if message.reactions.can_see_list:
-                                                    c_reactioneer = pd.DataFrame(
-                                                        user_reaction_list,
-                                                        columns=[
-                                                            "username",
-                                                            "full name",
-                                                            "user id",
-                                                            "phone number",
-                                                            "group name",
-                                                        ],
-                                                    )
-
-                                            if (
-                                                message.replies
-                                                and reply_analysis
-                                                and chat_type == "Channel"
-                                            ):
-                                                if message.replies.replies > 0:
-                                                    c_repliers = pd.DataFrame(
-                                                        user_replier_list,
-                                                        columns=[
-                                                            "Username",
-                                                            "Full name",
-                                                            "User id",
-                                                            "Phone number",
-                                                            "Group name",
-                                                        ],
-                                                    )
-                                                    c_replies = pd.DataFrame(
-                                                        replies_list,
-                                                        columns=[
-                                                            "To",
-                                                            "Message ID",
-                                                            "Reply ID",
-                                                            "Display_name",
-                                                            "ID",
-                                                            "Message_text",
-                                                            "Original_language",
-                                                            "Translated_text",
-                                                            "Translation_confidence",
-                                                            "Timestamp",
-                                                        ],
-                                                    )
-
-                                            if message.replies:
-                                                if message.replies.replies > 0:
-                                                    async for repl in client.iter_messages(
-                                                        message.chat_id,
-                                                        reply_to=message.id,
-                                                    ):
-                                                        user = await client.get_entity(
-                                                            repl.from_id.user_id
-                                                        )
-                                                        userdet = populate_user(user, t)
-                                                        user_replier_list.append(
-                                                            userdet
-                                                        )
-                                                        mss_txt = process_message(
-                                                            repl.text, user_language
-                                                        )
-                                                        replies_list.append(
-                                                            [
-                                                                t,
-                                                                message.id,
-                                                                repl.id,
-                                                                userdet[1],
-                                                                userdet[2],
-                                                                mss_txt["message_text"],
-                                                                mss_txt[
-                                                                    "original_language"
-                                                                ],
-                                                                mss_txt[
-                                                                    "translated_text"
-                                                                ],
-                                                                mss_txt[
-                                                                    "translation_confidence"
-                                                                ],
-                                                                parse_tg_date(
-                                                                    repl.date
-                                                                )["timestamp"],
-                                                            ]
-                                                        )
-
-                                            display_name = get_display_name(
-                                                message.sender
-                                            )
-                                            if chat_type != "Channel":
-                                                substring = "PeerUser"
-                                                string = str(message.from_id)
-                                                if substring in string:
-                                                    user_id = re.sub(
-                                                        "[^0-9]", "", string
-                                                    )
-                                                    nameID = str(user_id)
-                                                else:
-                                                    nameID = str(message.from_id)
-                                            else:
-                                                nameID = to_ent.id
-
-                                            timestamp = parse_tg_date(message.date)[
-                                                "timestamp"
-                                            ]
-                                            reply = message.reply_to_msg_id
-
-                                            _mess = process_message(
-                                                message.text, user_language
-                                            )
-                                            message_text = _mess["message_text"]
-                                            original_language = _mess[
-                                                "original_language"
-                                            ]
-                                            translated_text = _mess["translated_text"]
-                                            translation_confidence = _mess[
-                                                "translation_confidence"
-                                            ]
-
-                                            if message.forwards is not None:
-                                                forwards = int(message.forwards)
-                                            else:
-                                                forwards = "None"
-
-                                            if message.views is not None:
-                                                views = int(message.views)
-                                            else:
-                                                views = "Not found"
-
-                                            if message.reactions:
-                                                if message.reactions.can_see_list:
-                                                    print("#### TODO: REACTIONS")
-
-                                            message_list.append(
-                                                [
-                                                    t,
-                                                    message.id,
-                                                    display_name,
-                                                    nameID,
-                                                    message_text,
-                                                    original_language,
-                                                    translated_text,
-                                                    translation_confidence,
-                                                    timestamp,
-                                                    reply,
-                                                    views,
-                                                ]
-                                            )
-
-                                            if message.forward is not None:
-                                                forward_verify = True
-                                                try:
-                                                    forward_count += 1
-                                                    to_title = to_ent.title
-                                                    f_from_id = (
-                                                        message.forward.original_fwd.from_id
-                                                    )
-
-                                                    if f_from_id is not None:
-                                                        ent = await client.get_entity(
-                                                            f_from_id
-                                                        )
-                                                        user_string = "user_id"
-                                                        channel_string = "broadcast"
-
-                                                        if user_string in str(ent):
-                                                            ent_type = "User"
-                                                        else:
-                                                            if channel_string in str(
-                                                                ent
-                                                            ):
-                                                                if (
-                                                                    ent.broadcast
-                                                                    is True
-                                                                ):
-                                                                    ent_type = "Channel"
-                                                                elif (
-                                                                    ent.megagroup
-                                                                    is True
-                                                                ):
-                                                                    ent_type = (
-                                                                        "Megagroup"
-                                                                    )
-                                                                elif (
-                                                                    ent.gigagroup
-                                                                    is True
-                                                                ):
-                                                                    ent_type = (
-                                                                        "Gigagroup"
-                                                                    )
-                                                                else:
-                                                                    ent_type = "Chat"
-                                                            else:
-                                                                continue
-
-                                                        if ent.username is not None:
-                                                            username = ent.username
-                                                        else:
-                                                            username = "none"
-
-                                                        if ent_type != "Chat":
-                                                            result = str(ent.title)
-                                                        else:
-                                                            result = "none"
-
-                                                        if ent_type == "User":
-                                                            substring_1 = "PeerUser"
-                                                            string_1 = str(ent.user_id)
-                                                            if substring_1 in string_1:
-                                                                user_id = re.sub(
-                                                                    "[^0-9]",
-                                                                    "",
-                                                                    string_1,
-                                                                )
-                                                                user_id = await client.get_entity(
-                                                                    PeerUser(
-                                                                        int(user_id)
-                                                                    )
-                                                                )
-                                                                user_id = str(user_id)
-                                                                result = (
-                                                                    "User: "
-                                                                    + str(
-                                                                        ent.first_name
-                                                                    )
-                                                                    + " / ID: "
-                                                                    + str(user_id)
-                                                                )
-                                                            else:
-                                                                result = str(ent.title)
-                                                        else:
-                                                            result = str(ent.title)
-
-                                                        forwards_list.append(
-                                                            [
-                                                                t,
-                                                                to_title,
-                                                                result,
-                                                                f_from_id,
-                                                                username,
-                                                                timestamp,
-                                                            ]
-                                                        )
-
-                                                    if media_archive == True:
-                                                        if message.media:
-                                                            path = await message.download_media(
-                                                                file=media_directory
-                                                            )
-                                                        else:
-                                                            pass
-
-                                                except ChannelPrivateError:
-                                                    private_count += 1
-                                                    continue
-
-                                                except Exception as e:
-                                                    print("An exception occurred.", e)
-                                                    continue
-
-                                        except Exception as e:
-                                            print("An exception occurred.", e)
-
-                                    else:
-                                        message_list.append(
-                                            [
-                                                "None",
-                                                "None",
-                                                "None",
-                                                "None",
-                                                "None",
-                                                "None",
-                                                "None",
-                                                "None",
-                                            ]
-                                        )
-                                        pass
-
-                                    time.sleep(0.5)
-                                    bar()
-
-                            if len(replies_list) > 0:
-                                with open(
-                                    reply_file_archive, "w+", encoding="utf-8"
-                                ) as rep_file:
-                                    c_replies.to_csv(rep_file, sep=";")
-
-                            if len(user_replier_list) > 0:
-                                with open(
-                                    reply_memberlist_filename, "w+", encoding="utf-8"
-                                ) as repliers_file:
-                                    c_repliers.to_csv(repliers_file, sep=";")
-
-                            with open(
-                                file_archive, "w+", encoding="utf-8"
-                            ) as archive_file:
-                                c_archive.to_csv(archive_file, sep=";")
-
-                            if json_check == True:
-                                c_archive.to_json(
-                                    json_file + alphanumeric + "_archive.json",
-                                    orient="records",
-                                    compression="infer",
-                                    lines=True,
-                                    index=True,
-                                )
-                            else:
-                                pass
-
-                            if forwards_check is True:
-                                with open(
-                                    file_forwards, "w+", encoding="utf-8"
-                                ) as forwards_file:
-                                    c_forwards.to_csv(forwards_file, sep=";")
-
-                                if json_check == True:
-                                    c_forwards.to_json(
-                                        json_file + alphanumeric + "_edgelist.json",
-                                        orient="records",
-                                        compression="infer",
-                                        lines=True,
-                                        index=True,
-                                    )
                                 else:
                                     pass
-                            else:
-                                pass
 
-                            messages_found = int(c_archive.To.count()) - 1
-                            message_frequency_count = {}
-                            message_text = {}
-                            word_count = {}
-                            most_used_words = {}
-                            most_used_words_filtered = {}
-                            # message stats, top words
+                                messages_found = int(c_archive.To.count()) - 1
+                                message_frequency_count = {}
+                                message_text = {}
+                                word_count = {}
+                                most_used_words = {}
+                                most_used_words_filtered = {}
+                                # message stats, top words
 
-                            if chat_type != "Channel":
-                                pcount = c_archive.Display_name.count()
-                                pvalue_count = c_archive["Display_name"].value_counts()
-                                df03 = pvalue_count.rename_axis(
-                                    "unique_values"
-                                ).reset_index(name="counts")
-
-                                top_poster_one = str(df03.iloc[0]["unique_values"])
-                                top_pvalue_one = df03.iloc[0]["counts"]
-                                top_poster_two = str(df03.iloc[1]["unique_values"])
-                                top_pvalue_two = df03.iloc[1]["counts"]
-                                top_poster_three = str(df03.iloc[2]["unique_values"])
-                                top_pvalue_three = df03.iloc[2]["counts"]
-                                top_poster_four = str(df03.iloc[3]["unique_values"])
-                                top_pvalue_four = df03.iloc[3]["counts"]
-                                top_poster_five = str(df03.iloc[4]["unique_values"])
-                                top_pvalue_five = df03.iloc[4]["counts"]
-
-                                poster_one = (
-                                    str(top_poster_one)
-                                    + ", "
-                                    + str(top_pvalue_one)
-                                    + " messages"
-                                )
-                                poster_two = (
-                                    str(top_poster_two)
-                                    + ", "
-                                    + str(top_pvalue_two)
-                                    + " messages"
-                                )
-                                poster_three = (
-                                    str(top_poster_three)
-                                    + ", "
-                                    + str(top_pvalue_three)
-                                    + " messages"
-                                )
-                                poster_four = (
-                                    str(top_poster_four)
-                                    + ", "
-                                    + str(top_pvalue_four)
-                                    + " messages"
-                                )
-                                poster_five = (
-                                    str(top_poster_five)
-                                    + ", "
-                                    + str(top_pvalue_five)
-                                    + " messages"
-                                )
-
-                                df04 = c_archive.Display_name.unique()
-                                plength = len(df03)
-                                unique_active = len(df04)
-
-                            else:
-                                pass
-                                # one day this'll work out sleeping times
-                                # print(c_t_stats)
-
-                            print("\n")
-                            color_print_green(" [+] Chat archive saved", "")
-                            color_print_green("  ┬  Chat statistics", "")
-                            color_print_green(
-                                "  ├  Number of messages found: ", str(messages_found)
-                            )
-
-                            if chat_type != "Channel":
-                                color_print_green(
-                                    "  ├  Top poster 1: ", str(poster_one)
-                                )
-                                color_print_green(
-                                    "  ├  Top poster 2: ", str(poster_two)
-                                )
-                                color_print_green(
-                                    "  ├  Top poster 3: ", str(poster_three)
-                                )
-                                color_print_green(
-                                    "  ├  Top poster 4: ", str(poster_four)
-                                )
-                                color_print_green(
-                                    "  ├  Top poster 5: ", str(poster_five)
-                                )
-                                color_print_green(
-                                    "  ├  Total unique posters: ", str(unique_active)
-                                )
-
-                                # add a figure for unique current posters who are active
-                            else:
-                                pass
-                                # timestamp analysis
-                                #    print(Fore.GREEN
-                                #            + '  ├  Number of messages: '
-                                #          + Style.RESET_ALL
-                                #          + str(message_count))
-
-                            color_print_green(
-                                "  └  Archive saved to: ", str(file_archive)
-                            )
-
-                            if len(replies_list) > 0:
-                                middle_char = "├"
-                                if user_replier_list == 0:
-                                    middle_char = "└"
-
-                                print("\n")
-                                color_print_green(" [+] Replies analysis ", "")
-                                color_print_green("  ┬  Chat statistics", "")
-                                color_print_green(
-                                    f"  {middle_char}  Archive of replies saved to: ",
-                                    str(reply_file_archive),
-                                )
-                                if len(user_replier_list) > 0:
-                                    color_print_green(
-                                        "  └  Active members list who replied to messages, saved to: ",
-                                        str(reply_memberlist_filename),
-                                    )
-
-                            if forwards_check is True:
-                                if forward_count >= 15:
-                                    forwards_found = c_forwards.From.count()
-                                    value_count = c_forwards["From"].value_counts()
-                                    c_f_stats = value_count.rename_axis(
+                                if chat_type != "Channel":
+                                    pcount = c_archive.Display_name.count()
+                                    pvalue_count = c_archive["Display_name"].value_counts()
+                                    df03 = pvalue_count.rename_axis(
                                         "unique_values"
                                     ).reset_index(name="counts")
 
-                                    top_forward_one = c_f_stats.iloc[0]["unique_values"]
-                                    top_value_one = c_f_stats.iloc[0]["counts"]
-                                    top_forward_two = c_f_stats.iloc[1]["unique_values"]
-                                    top_value_two = c_f_stats.iloc[1]["counts"]
-                                    top_forward_three = c_f_stats.iloc[2][
-                                        "unique_values"
-                                    ]
-                                    top_value_three = c_f_stats.iloc[2]["counts"]
-                                    top_forward_four = c_f_stats.iloc[3][
-                                        "unique_values"
-                                    ]
-                                    top_value_four = c_f_stats.iloc[3]["counts"]
-                                    top_forward_five = c_f_stats.iloc[4][
-                                        "unique_values"
-                                    ]
-                                    top_value_five = c_f_stats.iloc[4]["counts"]
+                                    top_poster_one = str(df03.iloc[0]["unique_values"])
+                                    top_pvalue_one = df03.iloc[0]["counts"]
+                                    top_poster_two = str(df03.iloc[1]["unique_values"])
+                                    top_pvalue_two = df03.iloc[1]["counts"]
+                                    top_poster_three = str(df03.iloc[2]["unique_values"])
+                                    top_pvalue_three = df03.iloc[2]["counts"]
+                                    top_poster_four = str(df03.iloc[3]["unique_values"])
+                                    top_pvalue_four = df03.iloc[3]["counts"]
+                                    top_poster_five = str(df03.iloc[4]["unique_values"])
+                                    top_pvalue_five = df03.iloc[4]["counts"]
 
-                                    forward_one = (
-                                        str(top_forward_one)
+                                    poster_one = (
+                                        str(top_poster_one)
                                         + ", "
-                                        + str(top_value_one)
-                                        + " forwarded messages"
+                                        + str(top_pvalue_one)
+                                        + " messages"
                                     )
-                                    forward_two = (
-                                        str(top_forward_two)
+                                    poster_two = (
+                                        str(top_poster_two)
                                         + ", "
-                                        + str(top_value_two)
-                                        + " forwarded messages"
+                                        + str(top_pvalue_two)
+                                        + " messages"
                                     )
-                                    forward_three = (
-                                        str(top_forward_three)
+                                    poster_three = (
+                                        str(top_poster_three)
                                         + ", "
-                                        + str(top_value_three)
-                                        + " forwarded messages"
+                                        + str(top_pvalue_three)
+                                        + " messages"
                                     )
-                                    forward_four = (
-                                        str(top_forward_four)
+                                    poster_four = (
+                                        str(top_poster_four)
                                         + ", "
-                                        + str(top_value_four)
-                                        + " forwarded messages"
+                                        + str(top_pvalue_four)
+                                        + " messages"
                                     )
-                                    forward_five = (
-                                        str(top_forward_five)
+                                    poster_five = (
+                                        str(top_poster_five)
                                         + ", "
-                                        + str(top_value_five)
-                                        + " forwarded messages"
+                                        + str(top_pvalue_five)
+                                        + " messages"
                                     )
 
-                                    c_f_unique = c_forwards.From.unique()
-                                    unique_forwards = len(c_f_unique)
-
-                                    print("\n")
-                                    color_print_green(" [+] Edgelist saved", "")
-                                    color_print_green(
-                                        "  ┬  Forwarded message statistics", ""
-                                    )
-                                    color_print_green(
-                                        "  ├  Forwarded messages found: ",
-                                        str(forward_count),
-                                    )
-                                    color_print_green(
-                                        "  ├  Forwards from active public chats: ",
-                                        str(forwards_found),
-                                    )
-                                    color_print_green(
-                                        "  ├  Forwards from private (or now private) chats: ",
-                                        str(private_count),
-                                    )
-                                    color_print_green(
-                                        "  ├  Unique forward sources: ",
-                                        str(unique_forwards),
-                                    )
-                                    color_print_green(
-                                        "  ├  Top forward source 1: ", str(forward_one)
-                                    )
-                                    color_print_green(
-                                        "  ├  Top forward source 2: ", str(forward_two)
-                                    )
-                                    color_print_green(
-                                        "  ├  Top forward source 3: ",
-                                        str(forward_three),
-                                    )
-                                    color_print_green(
-                                        "  ├  Top forward source 4: ", str(forward_four)
-                                    )
-                                    color_print_green(
-                                        "  ├  Top forward source 5: ", str(forward_five)
-                                    )
-                                    color_print_green(
-                                        "  └  Edgelist saved to: ", edgelist_file
-                                    )
-                                    print("\n")
+                                    df04 = c_archive.Display_name.unique()
+                                    plength = len(df03)
+                                    unique_active = len(df04)
 
                                 else:
-                                    print("\n")
+                                    pass
+                                    # one day this'll work out sleeping times
+                                    # print(c_t_stats)
+
+                                print("\n")
+                                color_print_green(" [+] Chat archive saved", "")
+                                color_print_green("  ┬  Chat statistics", "")
+                                color_print_green(
+                                    "  ├  Number of messages found: ", str(messages_found)
+                                )
+
+                                if chat_type != "Channel":
                                     color_print_green(
-                                        " [!] Insufficient forwarded messages found",
-                                        edgelist_file,
+                                        "  ├  Top poster 1: ", str(poster_one)
                                     )
-                            else:
-                                pass
+                                    color_print_green(
+                                        "  ├  Top poster 2: ", str(poster_two)
+                                    )
+                                    color_print_green(
+                                        "  ├  Top poster 3: ", str(poster_three)
+                                    )
+                                    color_print_green(
+                                        "  ├  Top poster 4: ", str(poster_four)
+                                    )
+                                    color_print_green(
+                                        "  ├  Top poster 5: ", str(poster_five)
+                                    )
+                                    color_print_green(
+                                        "  ├  Total unique posters: ", str(unique_active)
+                                    )
 
-                if user_check == True:
-                    my_user = None
-                    try:
+                                    # add a figure for unique current posters who are active
+                                else:
+                                    pass
+                                    # timestamp analysis
+                                    #    print(Fore.GREEN
+                                    #            + '  ├  Number of messages: '
+                                    #          + Style.RESET_ALL
+                                    #          + str(message_count))
 
-                        print(
-                            Fore.GREEN
-                            + " [+] "
-                            + Style.RESET_ALL
-                            + "User details for "
-                            + t
-                        )
-                        user = int(t)
-                        my_user = await client.get_entity(PeerUser(int(user)))
+                                color_print_green(
+                                    "  └  Archive saved to: ", str(file_archive)
+                                )
 
-                        user_first_name = my_user.first_name
-                        user_last_name = my_user.last_name
-                        if user_last_name is not None:
-                            user_full_name = (
-                                str(user_first_name) + " " + str(user_last_name)
+                                if len(replies_list) > 0:
+                                    middle_char = "├"
+                                    if user_replier_list == 0:
+                                        middle_char = "└"
+
+                                    print("\n")
+                                    color_print_green(" [+] Replies analysis ", "")
+                                    color_print_green("  ┬  Chat statistics", "")
+                                    color_print_green(
+                                        f"  {middle_char}  Archive of replies saved to: ",
+                                        str(reply_file_archive),
+                                    )
+                                    if len(user_replier_list) > 0:
+                                        color_print_green(
+                                            "  └  Active members list who replied to messages, saved to: ",
+                                            str(reply_memberlist_filename),
+                                        )
+
+                                if forwards_check is True:
+                                    if forward_count >= 15:
+                                        forwards_found = c_forwards.From.count()
+                                        value_count = c_forwards["From"].value_counts()
+                                        c_f_stats = value_count.rename_axis(
+                                            "unique_values"
+                                        ).reset_index(name="counts")
+
+                                        top_forward_one = c_f_stats.iloc[0]["unique_values"]
+                                        top_value_one = c_f_stats.iloc[0]["counts"]
+                                        top_forward_two = c_f_stats.iloc[1]["unique_values"]
+                                        top_value_two = c_f_stats.iloc[1]["counts"]
+                                        top_forward_three = c_f_stats.iloc[2][
+                                            "unique_values"
+                                        ]
+                                        top_value_three = c_f_stats.iloc[2]["counts"]
+                                        top_forward_four = c_f_stats.iloc[3][
+                                            "unique_values"
+                                        ]
+                                        top_value_four = c_f_stats.iloc[3]["counts"]
+                                        top_forward_five = c_f_stats.iloc[4][
+                                            "unique_values"
+                                        ]
+                                        top_value_five = c_f_stats.iloc[4]["counts"]
+
+                                        forward_one = (
+                                            str(top_forward_one)
+                                            + ", "
+                                            + str(top_value_one)
+                                            + " forwarded messages"
+                                        )
+                                        forward_two = (
+                                            str(top_forward_two)
+                                            + ", "
+                                            + str(top_value_two)
+                                            + " forwarded messages"
+                                        )
+                                        forward_three = (
+                                            str(top_forward_three)
+                                            + ", "
+                                            + str(top_value_three)
+                                            + " forwarded messages"
+                                        )
+                                        forward_four = (
+                                            str(top_forward_four)
+                                            + ", "
+                                            + str(top_value_four)
+                                            + " forwarded messages"
+                                        )
+                                        forward_five = (
+                                            str(top_forward_five)
+                                            + ", "
+                                            + str(top_value_five)
+                                            + " forwarded messages"
+                                        )
+
+                                        c_f_unique = c_forwards.From.unique()
+                                        unique_forwards = len(c_f_unique)
+
+                                        print("\n")
+                                        color_print_green(" [+] Edgelist saved", "")
+                                        color_print_green(
+                                            "  ┬  Forwarded message statistics", ""
+                                        )
+                                        color_print_green(
+                                            "  ├  Forwarded messages found: ",
+                                            str(forward_count),
+                                        )
+                                        color_print_green(
+                                            "  ├  Forwards from active public chats: ",
+                                            str(forwards_found),
+                                        )
+                                        color_print_green(
+                                            "  ├  Forwards from private (or now private) chats: ",
+                                            str(private_count),
+                                        )
+                                        color_print_green(
+                                            "  ├  Unique forward sources: ",
+                                            str(unique_forwards),
+                                        )
+                                        color_print_green(
+                                            "  ├  Top forward source 1: ", str(forward_one)
+                                        )
+                                        color_print_green(
+                                            "  ├  Top forward source 2: ", str(forward_two)
+                                        )
+                                        color_print_green(
+                                            "  ├  Top forward source 3: ",
+                                            str(forward_three),
+                                        )
+                                        color_print_green(
+                                            "  ├  Top forward source 4: ", str(forward_four)
+                                        )
+                                        color_print_green(
+                                            "  ├  Top forward source 5: ", str(forward_five)
+                                        )
+                                        color_print_green(
+                                            "  └  Edgelist saved to: ", edgelist_file
+                                        )
+                                        print("\n")
+
+                                    else:
+                                        print("\n")
+                                        color_print_green(
+                                            " [!] Insufficient forwarded messages found",
+                                            edgelist_file,
+                                        )
+                                else:
+                                    pass
+
+                    if user_check == True:
+                        my_user = None
+                        try:
+
+                            print(
+                                Fore.GREEN
+                                + " [+] "
+                                + Style.RESET_ALL
+                                + "User details for "
+                                + t
                             )
-                        else:
-                            user_full_name = str(user_first_name)
+                            user = int(t)
+                            my_user = await client.get_entity(PeerUser(int(user)))
 
-                        if my_user.photo is not None:
-                            user_photo = my_user.photo.photo_id
-                        else:
-                            user_photo = "None"
-
-                        if my_user.restriction_reason is not None:
-                            ios_restriction = entity.restriction_reason[0]
-                            if 1 in entity.restriction_reason:
-                                android_restriction = entity.restriction_reason[1]
-                                user_restrictions = (
-                                    str(ios_restriction)
-                                    + ", "
-                                    + str(android_restriction)
+                            user_first_name = my_user.first_name
+                            user_last_name = my_user.last_name
+                            if user_last_name is not None:
+                                user_full_name = (
+                                    str(user_first_name) + " " + str(user_last_name)
                                 )
                             else:
-                                user_restrictions = str(ios_restriction)
-                        else:
-                            user_restrictions = "None"
+                                user_full_name = str(user_first_name)
 
-                        color_print_green(" [+] ", "User details for " + t)
-                        color_print_green("  ├  Username: ", str(my_user.username))
-                        color_print_green("  ├  Name: ", str(user_full_name))
-                        color_print_green("  ├  Verification: ", str(my_user.verified))
-                        color_print_green("  ├  Photo ID: ", str(user_photo))
-                        color_print_green("  ├  Phone number: ", str(my_user.phone))
-                        color_print_green(
-                            "  ├  Access hash: ", str(my_user.access_hash)
-                        )
-                        color_print_green("  ├  Language: ", str(my_user.lang_code))
-                        color_print_green("  ├  Bot: ", str(my_user.bot))
-                        color_print_green("  ├  Scam: ", str(my_user.scam))
-                        color_print_green("  └  Restrictions: ", str(user_restrictions))
+                            if my_user.photo is not None:
+                                user_photo = my_user.photo.photo_id
+                            else:
+                                user_photo = "None"
 
-                    except ValueError:
-                        pass
-                    if my_user is None:
+                            if my_user.restriction_reason is not None:
+                                ios_restriction = entity.restriction_reason[0]
+                                if 1 in entity.restriction_reason:
+                                    android_restriction = entity.restriction_reason[1]
+                                    user_restrictions = (
+                                        str(ios_restriction)
+                                        + ", "
+                                        + str(android_restriction)
+                                    )
+                                else:
+                                    user_restrictions = str(ios_restriction)
+                            else:
+                                user_restrictions = "None"
+
+                            color_print_green(" [+] ", "User details for " + t)
+                            color_print_green("  ├  Username: ", str(my_user.username))
+                            color_print_green("  ├  Name: ", str(user_full_name))
+                            color_print_green("  ├  Verification: ", str(my_user.verified))
+                            color_print_green("  ├  Photo ID: ", str(user_photo))
+                            color_print_green("  ├  Phone number: ", str(my_user.phone))
+                            color_print_green(
+                                "  ├  Access hash: ", str(my_user.access_hash)
+                            )
+                            color_print_green("  ├  Language: ", str(my_user.lang_code))
+                            color_print_green("  ├  Bot: ", str(my_user.bot))
+                            color_print_green("  ├  Scam: ", str(my_user.scam))
+                            color_print_green("  └  Restrictions: ", str(user_restrictions))
+
+                        except ValueError:
+                            pass
+                        if my_user is None:
+                            print(
+                                Fore.GREEN
+                                + " [!] "
+                                + Style.RESET_ALL
+                                + "User not found, this is likely because Telepathy has not encountered them yet."
+                            )
+
+                    if location_check == True:
+
+                        location = t
+
                         print(
                             Fore.GREEN
                             + " [!] "
                             + Style.RESET_ALL
-                            + "User not found, this is likely because Telepathy has not encountered them yet."
+                            + "Searching for users near "
+                            + location
+                            + "\n"
                         )
+                        latitude, longitude = location.split(sep=",")
 
-                if location_check == True:
+                        locations_file = telepathy_file + "locations/"
 
-                    location = t
-
-                    print(
-                        Fore.GREEN
-                        + " [!] "
-                        + Style.RESET_ALL
-                        + "Searching for users near "
-                        + location
-                        + "\n"
-                    )
-                    latitude, longitude = location.split(sep=",")
-
-                    locations_file = telepathy_file + "locations/"
-
-                    try:
-                        os.makedirs(locations_file)
-                    except FileExistsError:
-                        pass
-
-                    save_file = (
-                        locations_file
-                        + latitude
-                        + "_"
-                        + longitude
-                        + "_"
-                        + "locations.csv"
-                    )
-
-                    locations_list = []
-                    result = await client(
-                        functions.contacts.GetLocatedRequest(
-                            geo_point=types.InputGeoPoint(
-                                lat=float(latitude),
-                                long=float(longitude),
-                                accuracy_radius=42,
-                            ),
-                            self_expires=42,
-                        )
-                    )
-
-                    # progress bar?
-
-                    for user in result.updates[0].peers:
                         try:
-                            user_df = pd.DataFrame(
-                                locations_list, columns=["User_ID", "Distance"]
+                            os.makedirs(locations_file)
+                        except FileExistsError:
+                            pass
+
+                        save_file = (
+                            locations_file
+                            + latitude
+                            + "_"
+                            + longitude
+                            + "_"
+                            + "locations.csv"
+                        )
+
+                        locations_list = []
+                        result = await client(
+                            functions.contacts.GetLocatedRequest(
+                                geo_point=types.InputGeoPoint(
+                                    lat=float(latitude),
+                                    long=float(longitude),
+                                    accuracy_radius=42,
+                                ),
+                                self_expires=42,
                             )
-                            if hasattr(user, "peer"):
-                                ID = user.peer.user_id
-                            else:
-                                pass
-                            if hasattr(user, "distance"):
-                                distance = user.distance
-                            else:
-                                pass
+                        )
 
-                            locations_list.append([ID, distance])
+                        # progress bar?
 
-                        except:
-                            pass
-
-                    d_500 = 0
-                    d_1000 = 0
-                    d_2000 = 0
-                    d_3000 = 0
-
-                    for account, distance in user_df.itertuples(index=False):
-                        account = int(account)
-                        my_user = await client.get_entity(PeerUser(account))
-                        user_id = my_user.id
-                        name = my_user.first_name
-                        distance = int(distance)
-
-                        if distance == 500:
-                            d_500 += 1
-                        elif distance == 1000:
-                            d_1000 += 1
-                        elif distance == 2000:
-                            d_2000 += 1
-                        elif distance == 3000:
-                            d_3000 += 1
-
-                    with open(
-                        save_file, "w+", encoding="utf-8"
-                    ) as f:  # could one day append, including access time to differentiate
-                        user_df.to_csv(f, sep=";", index=False)
-
-                    total = len(locations_list)
-
-                    color_print_green(" [+] Users located", "")
-                    color_print_green("  ├  Users within 500m:  ", str(d_500))
-                    color_print_green("  ├  Users within 1000m: ", str(d_1000))
-                    color_print_green("  ├  Users within 2000m: ", str(d_2000))
-                    color_print_green("  ├  Users within 3000m: ", str(d_3000))
-                    color_print_green("  ├  Total users found:  ", str(total))
-                    color_print_green("  └  Location list saved to: ", save_file)
-
-                    # can also do the same for channels with similar output file to users
-                    # may one day add trilateration to find users closest to exact point
-
-                if export == True:
-                    export_file = telepathy_file + "export.csv"
-                    exports = []
-
-                    # progress bar
-
-                    for Dialog in await client.get_dialogs():
-                        try:
-                            if Dialog.entity.username:
-                                group_url = "http://t.me/" + Dialog.entity.username
-                                group_username = Dialog.entity.username
-
-                                web_req = parse_html_page(group_url)
-                                group_description = web_req["group_description"]
-                                total_participants = web_req["total_participants"]
-
-                                if Dialog.entity.broadcast is True:
-                                    chat_type = "Channel"
-                                elif Dialog.entity.megagroup is True:
-                                    chat_type = "Megagroup"
-                                elif Dialog.entity.gigagroup is True:
-                                    chat_type = "Gigagroup"
-                                else:
-                                    chat_type = "Chat"
-
-                                if Dialog.entity.restriction_reason is not None:
-                                    ios_restriction = Dialog.entity.restriction_reason[
-                                        0
-                                    ]
-                                    if 1 in Dialog.entity.restriction_reason:
-                                        android_restriction = (
-                                            Dialog.entity.restriction_reason[1]
-                                        )
-                                        group_status = (
-                                            str(ios_restriction)
-                                            + ", "
-                                            + str(android_restriction)
-                                        )
-                                    else:
-                                        group_status = str(ios_restriction)
-                                else:
-                                    group_status = "None"
-
-                                exports.append(
-                                    [
-                                        filetime,
-                                        Dialog.entity.title,
-                                        group_description,
-                                        total_participants,
-                                        group_username,
-                                        group_url,
-                                        chat_type,
-                                        Dialog.entity.id,
-                                        Dialog.entity.access_hash,
-                                        group_status,
-                                    ]
+                        for user in result.updates[0].peers:
+                            try:
+                                user_df = pd.DataFrame(
+                                    locations_list, columns=["User_ID", "Distance"]
                                 )
-
-                                export_df = pd.DataFrame(
-                                    exports,
-                                    columns=[
-                                        "Access Date",
-                                        "Title",
-                                        "Description",
-                                        "Total participants",
-                                        "Username",
-                                        "URL",
-                                        "Chat type",
-                                        "Chat ID",
-                                        "Access hash",
-                                        "Restrictions",
-                                    ],
-                                )
-
-                                if not os.path.isfile(export_file):
-                                    export_df.to_csv(export_file, sep=";", index=False)
+                                if hasattr(user, "peer"):
+                                    ID = user.peer.user_id
                                 else:
-                                    export_df.to_csv(
-                                        export_file, sep=";", mode="w", index=False
-                                    )
+                                    pass
+                                if hasattr(user, "distance"):
+                                    distance = user.distance
+                                else:
+                                    pass
 
-                        except AttributeError:
-                            pass
+                                locations_list.append([ID, distance])
 
-        with client:
-            client.loop.run_until_complete(main())
+                            except:
+                                pass
+
+                        d_500 = 0
+                        d_1000 = 0
+                        d_2000 = 0
+                        d_3000 = 0
+
+                        for account, distance in user_df.itertuples(index=False):
+                            account = int(account)
+                            my_user = await client.get_entity(PeerUser(account))
+                            user_id = my_user.id
+                            name = my_user.first_name
+                            distance = int(distance)
+
+                            if distance == 500:
+                                d_500 += 1
+                            elif distance == 1000:
+                                d_1000 += 1
+                            elif distance == 2000:
+                                d_2000 += 1
+                            elif distance == 3000:
+                                d_3000 += 1
+
+                        with open(
+                            save_file, "w+", encoding="utf-8"
+                        ) as f:  # could one day append, including access time to differentiate
+                            user_df.to_csv(f, sep=";", index=False)
+
+                        total = len(locations_list)
+
+                        color_print_green(" [+] Users located", "")
+                        color_print_green("  ├  Users within 500m:  ", str(d_500))
+                        color_print_green("  ├  Users within 1000m: ", str(d_1000))
+                        color_print_green("  ├  Users within 2000m: ", str(d_2000))
+                        color_print_green("  ├  Users within 3000m: ", str(d_3000))
+                        color_print_green("  ├  Total users found:  ", str(total))
+                        color_print_green("  └  Location list saved to: ", save_file)
+
+                        # can also do the same for channels with similar output file to users
+                        # may one day add trilateration to find users closest to exact point
+
+    with client:
+        client.loop.run_until_complete(main())
 
 
 if __name__ == "__main__":
