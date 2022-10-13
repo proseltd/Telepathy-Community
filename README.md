@@ -143,6 +143,7 @@ Upcoming features include:
   - [x] Add location lookup.
   - [ ] Maximise compatibility of edgelists with Gephi.
   - [ ] Include sockpuppet account provisioning (creation of accounts from previous exported lists).
+  - [ ] Automated EXIF data report and analytics when media archiving is enabled.
 
 
 ## feedback
