@@ -1,2 +1,4 @@
 *.session
 telepathy_files/
+.idea/
+*.session-journal
