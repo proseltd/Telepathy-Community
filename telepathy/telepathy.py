@@ -455,11 +455,11 @@ def cli(
                                 members_df = pd.DataFrame(
                                     members,
                                     columns=[
-                                        "username",
-                                        "full name",
-                                        "user id",
-                                        "phone number",
-                                        "group name",
+                                        "Username",
+                                        "Full name",
+                                        "User ID",
+                                        "Phone number",
+                                        "Group name",
                                     ],
                                 )
                                 members.append(populate_user(user, t))
@@ -877,11 +877,11 @@ def cli(
                                                         c_reactioneer = pd.DataFrame(
                                                             user_reaction_list,
                                                             columns=[
-                                                                "username",
-                                                                "full name",
-                                                                "user id",
-                                                                "phone number",
-                                                                "group name",
+                                                                "Username",
+                                                                "Full name",
+                                                                "User ID",
+                                                                "Phone number",
+                                                                "Group name",
                                                             ],
                                                         )
 
@@ -896,7 +896,7 @@ def cli(
                                                             columns=[
                                                                 "Username",
                                                                 "Full name",
-                                                                "User id",
+                                                                "User ID",
                                                                 "Phone number",
                                                                 "Group name",
                                                             ],
