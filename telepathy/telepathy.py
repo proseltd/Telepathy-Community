@@ -5,6 +5,7 @@
     An OSINT toolkit for investigating Telegram chats.
 """
 
+from tokenize import group
 import pandas as pd
 import datetime
 import requests
@@ -18,12 +19,14 @@ import click
 import re
 import textwrap
 import time
+import pprint
 
 from libs.utils import (
     print_banner,
     color_print_green,
     populate_user,
     process_message,
+    process_description,
     parse_tg_date,
     parse_html_page
 )
@@ -46,6 +49,10 @@ from telethon import TelegramClient, functions, types, utils
 from telethon.utils import get_display_name, get_message_id
 from alive_progress import alive_bar
 from bs4 import BeautifulSoup
+import pikepdf
+from hachoir.parser import createParser
+from hachoir.metadata import extractMetadata
+
 
 
 @click.command()
@@ -109,7 +116,6 @@ def cli(
     location_check = False
     last_date = None
     chunk_size = 1000
-    forwards_check = False
     filetime = datetime.datetime.now().strftime("%Y_%m_%d-%H_%M")
     filetime_clean = str(filetime)
 
@@ -219,6 +225,15 @@ def cli(
                             group_description = web_req["group_description"]
                             total_participants = web_req["total_participants"]
 
+                            _desc = process_description(
+                                group_description, user_language
+                                )
+                            description_text = _desc["group_description"]
+                            original_language = _mess[
+                                "original_language"
+                            ]
+                            translated_description = _desc["translated_text"]
+
                             if Dialog.entity.broadcast is True:
                                 chat_type = "Channel"
                             elif Dialog.entity.megagroup is True:
@@ -251,6 +266,7 @@ def cli(
                                     filetime,
                                     Dialog.entity.title,
                                     group_description,
+                                    translated_description,
                                     total_participants,
                                     group_username,
                                     group_url,
@@ -267,6 +283,7 @@ def cli(
                                     "Access Date",
                                     "Title",
                                     "Description",
+                                    "Translated description",
                                     "Total participants",
                                     "Username",
                                     "URL",
@@ -301,12 +318,12 @@ def cli(
                     if "https://t.me/+" in t:
                         t = t.replace('https://t.me/+', 'https://t.me/joinchat/')
 
-
-                    save_directory = telepathy_file + alphanumeric
-                    try:
-                        os.makedirs(save_directory)
-                    except FileExistsError:
-                        pass
+                    if basic is True or comp_check is True:
+                        save_directory = telepathy_file + alphanumeric
+                        try:
+                            os.makedirs(save_directory)
+                        except FileExistsError:
+                            pass
 
                     # Creating logfile
                     log_file = telepathy_file + "log.csv"
@@ -318,7 +335,7 @@ def cli(
                         except FileExistsError:
                             pass
 
-                    if basic == True:
+                    if basic == True and comp_check == False:
                         color_print_green(" [!] ", "Performing basic scan")
                     elif comp_check == True:
                         color_print_green(" [!] ", "Performing comprehensive scan")
@@ -406,14 +423,35 @@ def cli(
 
                         group_description = web_req["group_description"]
                         total_participants = web_req["total_participants"]
+
+                        _desc = process_description(
+                            group_description, user_language
+                            )
+                        description_text = _desc["description_text"]
+                        original_language = _desc[
+                            "original_language"
+                        ]
+
+                        translated_description = _desc["translated_text"]
+
                         preferredWidth = 70
-                        descript = Fore.GREEN + "Description: " + Style.RESET_ALL + web_req["group_description"]
-                        prefix = descript + " "
+                        descript = Fore.GREEN + "Description: " + Style.RESET_ALL
+                        prefix = descript 
                         wrapper_d = textwrap.TextWrapper(
-                            initial_indent=descript,
+                            initial_indent=prefix,
                             width=preferredWidth,
                             subsequent_indent="                  ",
                         )
+
+                        trans_descript = Fore.GREEN + "Translated: " + Style.RESET_ALL
+                        prefix = trans_descript
+                        wrapper_td = textwrap.TextWrapper(
+                            initial_indent=prefix,
+                            width=preferredWidth,
+                            subsequent_indent="                  ",
+                        )
+
+                        group_description = ('"' + group_description + '"')
 
                         if entity.broadcast is True:
                             chat_type = "Channel"
@@ -494,10 +532,12 @@ def cli(
                             color_print_green(" [+] Memberlist fetched", "")
                         else:
                             pass
-
+                        
                         color_print_green("  ┬  Chat details", "")
                         color_print_green("  ├  Title: ", str(entity.title))
                         color_print_green("  ├  ", wrapper_d.fill(group_description))
+                        if translated_description != group_description:
+                            color_print_green("  ├  ", wrapper_td.fill(translated_description))
                         color_print_green(
                             "  ├  Total participants: ", str(total_participants)
                         )
@@ -535,13 +575,14 @@ def cli(
                         color_print_green(
                             "  └  ", wrapper_r.fill(group_status)
                         )
-                        print("\n")
+                        #print("\n")
 
                         log.append(
                             [
                                 filetime,
                                 entity.title,
                                 group_description,
+                                translated_description,
                                 total_participants,
                                 found_participants,
                                 group_username,
@@ -562,6 +603,7 @@ def cli(
                                 "Access Date",
                                 "Title",
                                 "Description",
+                                "Translated description",
                                 "Total participants",
                                 "Participants found",
                                 "Username",
@@ -609,7 +651,7 @@ def cli(
                                 if message.forward is not None:
                                     forward_count += 1
 
-                            print("\n")
+                            #print("\n")
                             color_print_green(" [-] ", "Fetching forwarded messages...")
 
                             progress_bar = (
@@ -747,7 +789,7 @@ def cli(
                                 df02 = forwards_df.From.unique()
                                 unique_forwards = len(df02)
 
-                                print("\n")
+                                #print("\n")
                                 color_print_green(" [+] Forward scrape complete", "")
                                 color_print_green("  ┬  Statistics", "")
                                 color_print_green(
@@ -776,7 +818,7 @@ def cli(
                                     "  ├  Top forward source 5: ", str(forward_five)
                                 )
                                 color_print_green("  └  Edgelist saved to: ", edgelist_file)
-                                print("\n")
+                                #print("\n")
 
                             else:
                                 print(
@@ -806,11 +848,12 @@ def cli(
                                 private_count = 0
 
                                 if media_archive is True:
+                                    files = []
+                                    print("\n")
                                     color_print_green(
                                         " [!] ", "Media content will be archived"
                                     )
 
-                                print("\n")
                                 color_print_green(
                                     " [!] ", "Calculating number of messages..."
                                 )
@@ -999,9 +1042,22 @@ def cli(
                                                 else:
                                                     views = "Not found"
 
-                                                if message.reactions:
-                                                    if message.reactions.can_see_list:
-                                                        print("#### TODO: REACTIONS")
+                                                #if message.reactions:
+                                                    #if message.reactions.can_see_list:
+                                                        #print(dir(message.reactions.results))
+                                                        #print("#### TODO: REACTIONS")
+
+                                                if media_archive == True:
+                                                    #add a progress bar for each file download
+                                                    if message.media:
+                                                        path = await message.download_media(
+                                                            file=media_directory
+                                                        )
+                                                        files.append(path)
+                                                    else:
+                                                        pass
+
+                                                
 
                                                 message_list.append(
                                                     [
@@ -1114,13 +1170,7 @@ def cli(
                                                                 ]
                                                             )
 
-                                                        if media_archive == True:
-                                                            if message.media:
-                                                                path = await message.download_media(
-                                                                    file=media_directory
-                                                                )
-                                                            else:
-                                                                pass
+                                                        
 
                                                     except ChannelPrivateError:
                                                         private_count += 1
@@ -1151,17 +1201,18 @@ def cli(
                                         time.sleep(0.5)
                                         bar()
 
-                                if len(replies_list) > 0:
-                                    with open(
-                                        reply_file_archive, "w+", encoding="utf-8"
-                                    ) as rep_file:
-                                        c_replies.to_csv(rep_file, sep=";")
+                                if reply_analysis is True:
+                                    if len(replies_list) > 0:
+                                        with open(
+                                            reply_file_archive, "w+", encoding="utf-8"
+                                        ) as rep_file:
+                                            c_replies.to_csv(rep_file, sep=";")
 
-                                if len(user_replier_list) > 0:
-                                    with open(
-                                        reply_memberlist_filename, "w+", encoding="utf-8"
-                                    ) as repliers_file:
-                                        c_repliers.to_csv(repliers_file, sep=";")
+                                    if len(user_replier_list) > 0:
+                                        with open(
+                                            reply_memberlist_filename, "w+", encoding="utf-8"
+                                        ) as repliers_file:
+                                            c_repliers.to_csv(repliers_file, sep=";")
 
                                 with open(
                                     file_archive, "w+", encoding="utf-8"
@@ -1258,13 +1309,67 @@ def cli(
                                     df04 = c_archive.Display_name.unique()
                                     plength = len(df03)
                                     unique_active = len(df04)
-
-                                else:
-                                    pass
                                     # one day this'll work out sleeping times
                                     # print(c_t_stats)
 
-                                print("\n")
+                                elif reply_analysis is True:
+                                    if len(replies_list) > 0:
+                                        replier_count = c_repliers["User id"].count()
+                                        replier_value_count = c_repliers["User id"].value_counts()
+                                        replier_df = replier_value_count.rename_axis(
+                                            "unique_values"
+                                        ).reset_index(name="counts")
+
+                                        top_replier_one = str(replier_df.iloc[0]["unique_values"])
+                                        top_replier_value_one = replier_df.iloc[0]["counts"]
+                                        top_replier_two = str(replier_df.iloc[1]["unique_values"])
+                                        top_replier_value_two = replier_df.iloc[1]["counts"]
+                                        top_replier_three = str(replier_df.iloc[2]["unique_values"])
+                                        top_replier_value_three = replier_df.iloc[2]["counts"]
+                                        top_replier_four = str(replier_df.iloc[3]["unique_values"])
+                                        top_replier_value_four = replier_df.iloc[3]["counts"]
+                                        top_replier_five = str(replier_df.iloc[4]["unique_values"])
+                                        top_replier_value_five = replier_df.iloc[4]["counts"]
+
+                                        replier_one = (
+                                            str(top_replier_one)
+                                            + ", "
+                                            + str(top_replier_value_one)
+                                            + " replies"
+                                        )
+                                        replier_two = (
+                                            str(top_replier_two)
+                                            + ", "
+                                            + str(top_replier_value_two)
+                                            + " replies"
+                                        )
+                                        replier_three = (
+                                            str(top_replier_three)
+                                            + ", "
+                                            + str(top_replier_value_three)
+                                            + " replies"
+                                        )
+                                        replier_four = (
+                                            str(top_replier_four)
+                                            + ", "
+                                            + str(top_replier_value_four)
+                                            + " replies"
+                                        )
+                                        replier_five = (
+                                            str(top_replier_five)
+                                            + ", "
+                                            + str(top_replier_value_five)
+                                            + " replies"
+                                        )
+
+                                        replier_count_df = c_repliers["User id"].unique()
+                                        replier_length = len(replier_df)
+                                        replier_unique = len(replier_count_df)
+
+                                else:
+                                    pass
+
+                                #print("\n")
                                 color_print_green(" [+] Chat archive saved", "")
                                 color_print_green("  ┬  Chat statistics", "")
                                 color_print_green(
@@ -1290,8 +1395,7 @@ def cli(
                                     color_print_green(
                                         "  ├  Total unique posters: ", str(unique_active)
                                     )
-
-                                    # add a figure for unique current posters who are active
+                                
                                 else:
                                     pass
                                     # timestamp analysis
@@ -1304,23 +1408,44 @@ def cli(
                                     "  └  Archive saved to: ", str(file_archive)
                                 )
 
-                                if len(replies_list) > 0:
-                                    middle_char = "├"
-                                    if user_replier_list == 0:
-                                        middle_char = "└"
+                                if reply_analysis is True:
+                                    if len(replies_list) > 0:
+                                        middle_char = "├"
+                                        if user_replier_list == 0:
+                                            middle_char = "└"
 
-                                    print("\n")
-                                    color_print_green(" [+] Replies analysis ", "")
-                                    color_print_green("  ┬  Chat statistics", "")
-                                    color_print_green(
-                                        f"  {middle_char}  Archive of replies saved to: ",
-                                        str(reply_file_archive),
-                                    )
-                                    if len(user_replier_list) > 0:
+                                        #print("\n")
+                                        color_print_green(" [+] Replies analysis ", "")
+                                        color_print_green("  ┬  Chat statistics", "")
                                         color_print_green(
-                                            "  └  Active members list who replied to messages, saved to: ",
-                                            str(reply_memberlist_filename),
+                                            f"  {middle_char}  Archive of replies saved to: ",
+                                            str(reply_file_archive),
                                         )
+                                        if len(user_replier_list) > 0:
+                                            color_print_green(
+                                                "  └  Active members list who replied to messages, saved to: ",
+                                                str(reply_memberlist_filename),
+                                            )
+
+                                        color_print_green(
+                                            "  ├  Top replier 1: ", str(replier_one)
+                                        )
+                                        color_print_green(
+                                            "  ├  Top replier 2: ", str(replier_two)
+                                        )
+                                        color_print_green(
+                                            "  ├  Top replier 3: ", str(replier_three)
+                                        )
+                                        color_print_green(
+                                            "  ├  Top replier 4: ", str(replier_four)
+                                        )
+                                        color_print_green(
+                                            "  ├  Top replier 5: ", str(replier_five)
+                                        )
+                                        color_print_green(
+                                            "  ├  Total unique repliers: ", str(replier_unique)
+                                        )
+                                        # add a figure for unique current posters who are active
 
                                 if forwards_check is True:
                                     if forward_count >= 15:
@@ -1381,7 +1506,7 @@ def cli(
                                         c_f_unique = c_forwards.From.unique()
                                         unique_forwards = len(c_f_unique)
 
-                                        print("\n")
+                                        #print("\n")
                                         color_print_green(" [+] Edgelist saved", "")
                                         color_print_green(
                                             "  ┬  Forwarded message statistics", ""
@@ -1421,10 +1546,10 @@ def cli(
                                         color_print_green(
                                             "  └  Edgelist saved to: ", edgelist_file
                                         )
-                                        print("\n")
+                                        #print("\n")
 
                                     else:
-                                        print("\n")
+                                        #print("\n")
                                         color_print_green(
                                             " [!] Insufficient forwarded messages found",
                                             edgelist_file,
@@ -1436,13 +1561,6 @@ def cli(
                         my_user = None
                         try:
 
-                            print(
-                                Fore.GREEN
-                                + " [+] "
-                                + Style.RESET_ALL
-                                + "User details for "
-                                + t
-                            )
                             user = int(t)
                             my_user = await client.get_entity(PeerUser(int(user)))
 
@@ -1525,7 +1643,9 @@ def cli(
                             + "_"
                             + longitude
                             + "_"
-                            + "locations.csv"
+                            + "locations_"
+                            + filetime_clean
+                            + ".csv"
                         )
 
                         locations_list = []
@@ -1599,10 +1719,9 @@ def cli(
 
                         # can also do the same for channels with similar output file to users
                         # may one day add trilateration to find users closest to exact point
-
+                        
     with client:
         client.loop.run_until_complete(main())
-
 
 if __name__ == "__main__":
     cli()

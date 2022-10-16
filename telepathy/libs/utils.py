@@ -82,6 +82,32 @@ def process_message(mess, user_lang):
         "message_text": mess_txt,
     }
 
+def process_description(desc, user_lang):
+    if desc is not None:
+        desc_txt = '"' + desc + '"'
+    else:
+        desc_txt = "none"
+
+    if desc_txt != "none":
+        translator = Translator()
+        detection = translator.detect(desc_txt)
+        language_code = detection.lang
+        translation_confidence = detection.confidence
+        translation = translator.translate(desc_txt, dest=user_lang)
+        original_language = translation.src
+        translated_text = translation.text
+    else:
+        original_language = user_lang
+        translated_text = "n/a"
+        translation_confidence = "n/a"
+
+    return {
+        "original_language": original_language,
+        "translated_text": translated_text,
+        "translation_confidence": translation_confidence,
+        "description_text": desc_txt,
+    }
+
 def color_print_green(first_string,second_string):
     print(
         Fore.GREEN

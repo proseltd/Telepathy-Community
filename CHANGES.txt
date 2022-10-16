@@ -1,3 +1,7 @@
+v2.2.0 16.10.2022 -- Major update! Code refactoring, reply retrieval,
+                      translated descriptions, speedier decryption of media, support for 
+                      analyzing private groups, bug fixes and much more!
+
 
 v2.1.10 25.08.2022 -- Bugs busted, solved initialization error, efficiency tweaks,
                       added automatic translations, fixed issue with media archiving,

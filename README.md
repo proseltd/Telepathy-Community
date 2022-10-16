@@ -1,6 +1,6 @@
 
 
-Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.1.10.
+Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.2.0.
 
 
 ## Installation
@@ -21,7 +21,7 @@ $ pip install -r requirements.txt
 
 ## Setup
 
-On first use, Telepathy will ask for your Telegram API details (obtained from my.telegram.org). Once those are set up, it will prompt you for an authorization code which will be sent to your Telegram account. If you have two-factor authentication enabled, you'll be asked to input your Telegram password.
+On first use, Telepathy will ask for your Telegram API details (obtained from my.telegram.org). Once those are set up, it will prompt you to enter your phone number again and then send an authorization code to your Telegram account. If you have two-factor authentication enabled, you'll be asked to input your Telegram password.
 
 
 ## Usage:
@@ -70,6 +70,8 @@ $ telepathy -t durov -f
 
 Use this flag to include media archiving alongside a comprehensive scan. This makes the process take significantly longer and should also be used with caution: you'll download all media content from the target chat, and it's up to you to not store illegal files on your system.
 
+Since 2.2.0, downloading all media files will also generate a CSV file listing the files' metadata. 
+
 For example, this will run a comprehensive scan, including media archiving:
 
 ```
@@ -82,16 +84,16 @@ $ telepathy -t durov -c -m
 Looks up a specified user ID. This will only work if your account has "encountered" the user before (for example, after archiving a group).
 
 ```
-$ telepathy -u 0123456789
+$ telepathy -t 0123456789 -u
 ```
 
 
 - **'--location', '-l' [COORDINATES]**
 
-Finds users near to specified coordinates. Input should be longitude followed by latitude, seperated by a comma.
+Finds users near to specified coordinates. Input should be longitude followed by latitude, seperated by a comma. This feature only works if your Telegram account has a profile image which is set to publicly viewable.
 
 ```
-$ telepathy -l 51.5032973,-0.1217424
+$ telepathy -t 51.5032973,-0.1217424 -l
 ```
 
 - **'--alt', '-a'**
@@ -112,7 +114,7 @@ $ telepathy -e
   
 - **'--reply', '-r'**
 
-Flag for enable the reply retrieval for the target channel, it will map users who replied in the channel and it will dump the full conversation chain 
+Flag for enable the reply in the channel, it will map users who replied in the channel and it will dump the full conversation chain 
 
 ```
 $ telepathy -t [CHANNEL] -c -r 
@@ -143,12 +145,15 @@ Upcoming features include:
   - [x] Add location lookup.
   - [ ] Maximise compatibility of edgelists with Gephi.
   - [ ] Include sockpuppet account provisioning (creation of accounts from previous exported lists).
-  - [ ] Automated EXIF data report and analytics when media archiving is enabled.
+  - [ ] Listing who has admin rights in memberlists.
+  - [ ] Media downloaded in the background to increase efficiency.
+  - [ ] When media archiving is flagged, the location of downloaded content will be added to the archive file.
+  - [ ] Adding direct link to posts in the chat archive file
 
 
 ## feedback
 
-Please send feedback to @jordanwildon on Twitter. You can follow [@TelepathyDB](twitter.com/TelepathyDB) for updates.
+Please send feedback to @jordanwildon on Twitter. You can follow Telepathy updates at @TelepathyDB.
 
 
 ## Usage terms
@@ -158,6 +163,6 @@ You may use Telepathy however you like, but your usecase is your responsibility.
 
 ## Credits
 
-All tools created by Jordan Wildon (@jordanwildon). Special thanks go to [Giacomo Giallombardo](https://github.com/aaarghhh) for adding additional features and code refactoring, and [Alex Newhouse](twitter.com/AlexBNewhouse) for help and guidance with Telepathy v1.
+All tools created by Jordan Wildon (@jordanwildon). Special thanks go to [Giacomo Giallombardo](https://github.com/aaarghhh) for adding additional features and code refactoring, and Alex Newhouse (@AlexBNewhouse) for his help with Telepathy v1.
 
 Where possible, credit for the use of this tool in published research is desired, but not required. This can either come in the form of crediting the author, or crediting Telepathy itself (preferably with a link).
