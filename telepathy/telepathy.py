@@ -915,18 +915,18 @@ def cli(
                                                     ],
                                                 )
 
-                                                if message.reactions:
-                                                    if message.reactions.can_see_list:
-                                                        c_reactioneer = pd.DataFrame(
-                                                            user_reaction_list,
-                                                            columns=[
-                                                                "Username",
-                                                                "Full name",
-                                                                "User ID",
-                                                                "Phone number",
-                                                                "Group name",
-                                                            ],
-                                                        )
+                                                #if message.reactions:
+                                                #    if message.reactions.can_see_list:
+                                                #        c_reactioneer = pd.DataFrame(
+                                                #            user_reaction_list,
+                                                #            columns=[
+                                                #                "Username",
+                                                #                "Full name",
+                                                #                "User ID",
+                                                #                "Phone number",
+                                                #                "Group name",
+                                                #            ],
+                                                #        )
 
                                                 if (
                                                     message.replies
