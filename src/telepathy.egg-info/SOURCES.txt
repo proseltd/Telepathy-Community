@@ -1,0 +1,12 @@
+LICENSE.txt
+README.md
+setup.py
+src/telepathy/const.py
+src/telepathy/telepathy.py
+src/telepathy/utils.py
+src/telepathy.egg-info/PKG-INFO
+src/telepathy.egg-info/SOURCES.txt
+src/telepathy.egg-info/dependency_links.txt
+src/telepathy.egg-info/entry_points.txt
+src/telepathy.egg-info/requires.txt
+src/telepathy.egg-info/top_level.txt
