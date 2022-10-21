@@ -1,6 +1,6 @@
 
 
-Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.2.50.
+Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.2.58.
 
 
 ## Installation
@@ -23,7 +23,7 @@ $ pip install -r requirements.txt
 
 On first use, Telepathy will ask for your Telegram API details (obtained from my.telegram.org). Once those are set up, it will prompt you to enter your phone number again and then send an authorization code to your Telegram account. If you have two-factor authentication enabled, you'll be asked to input your Telegram password.
 
-OPTIONAL: Installing cryptg ($ pip3 install cryptg) may improve Telepathy's speed. The package hands decryption by Python over to C, making media downloads in particular quicker and more efficient. 
+OPTIONAL: Installing cryptg ($ pip3 install cryptg) may improve Telepathy's speed. The package hand decryption by Python over to C, making media downloads in particular quicker and more efficient. 
 
 
 ## Usage:
@@ -98,13 +98,15 @@ Finds users near to specified coordinates. Input should be longitude followed by
 $ telepathy -t 51.5032973,-0.1217424 -l
 ```
 
+
 - **'--alt', '-a'**
 
-Flag for running Telepathy from an alternative number. You can use the same API key and Hash but authenticate with a different phone number. Allows for running multiple scans at once.
+Flag for running Telepathy from an alternative number. You can use the same API key and Hash but authenticate with a different phone number. Allows for running multiple scans at the same time.
 
 ```
 $ telepathy -t Durov -c -a
 ```
+
 
 - **'--export', '-e'**
 
@@ -114,6 +116,7 @@ Exports all chats your account is part of to a CSV file. In a future release, th
 $ telepathy -e
 ```
   
+
 - **'--reply', '-r'**
 
 Flag for enable the reply in the channel, it will map users who replied in the channel and it will dump the full conversation chain 
@@ -121,6 +124,16 @@ Flag for enable the reply in the channel, it will map users who replied in the c
 ```
 $ telepathy -t [CHANNEL] -c -r 
 ```
+
+
+## Bonus investigations tips:
+
+ - Navigating to a media archive directory and running Exiftool may give you a whole host of useful information for further investigation. Telegram doesn't currently scrub metadata from PDF, DOCX, XLSX, MP4, MOV and some other filetypes, which offer creation and edit time metadata, often timezones, sometimes authors, and general technical information about the perosn or people who created a media file.  
+ ```
+$ cd ./telepathy/telepathy_files/CHATNAME/media
+$ exiftool * > metadata.txt
+```
+ - Group and inferred channel memberlists offer a point of further investigation for usernames found. By using Maigret, you can look up where else a username has been used. While this is not accurate in all cases, it's been proven to be useful for handles that are often reused. In this case, remember to verify your findings to avoid false positives.
 
 
 ## A note on how Telegram works
@@ -134,23 +147,26 @@ In some environments (particularly Windows), Telepathy struggles to effectively 
 Upcoming features include:
 
   - [ ] Adding a time specification flag to set archiving for specific period.
-  - [x] The ability to archive comments on messages to channels.
   - [ ] The ability to gather the number of reactions to messages, including statistics on engagement rate.
   - [ ] Finding a method to once again gather complete memberlists (currently restricted by the API).
-  - [x] Introducing the ability to scan multiple targets at once.
   - [ ] Improved statistics: including timestamp analysis for channels.
   - [ ] Generating an entirely automated complete report, including visualisation for some statistics.
-  - [x] Making it easier to scan private groups which your account is a member of.
   - [ ] Hate speech analytics.
-  - [x] Clean code, efficiency tweaks.
-  - [x] Add user lookup.
-  - [x] Add location lookup.
-  - [ ] Maximise compatibility of edgelists with Gephi.
+  - [x] Maximise compatibility of edgelists with Gephi.
   - [ ] Include sockpuppet account provisioning (creation of accounts from previous exported lists).
-  - [ ] Listing who has admin rights in memberlists.
+  - [ ] Listing who has group admin rights in memberlists.
   - [ ] Media downloaded in the background to increase efficiency.
   - [ ] When media archiving is flagged, the location of downloaded content will be added to the archive file.
-  - [ ] Adding direct link to posts in the chat archive file
+  - [ ] Exploring, and potentially integrating, media cross checks based on https://github.com/conflict-investigations/media-search-engine.
+  - [ ] Ensuring inferred channel memberlists don't contain duplicate entries.
+  - [ ] Introducing local chat retrival within the location lookup module.
+  - [ ] Adding trilateration option for location lookup to aid better location matching.
+  - [ ] Further code refactoring to ensure long-term maintainability.
+  - [ ] Progress bars for media downloads to give a better estimation of runtime.
+  - [ ] Adding additional alternative logins.
+  - [ ] Improved language support.
+  - [ ] Ensure inferred channel memberlists (based on repliers) contains each account only once.
+  - [ ] Correctly define destinction between reply (as in a chat) and comment (as in channel).
 
 
 ## feedback
@@ -165,6 +181,6 @@ You may use Telepathy however you like, but your usecase is your responsibility.
 
 ## Credits
 
-All tools created by Jordan Wildon (@jordanwildon). Special thanks go to [Giacomo Giallombardo](https://github.com/aaarghhh) for adding additional features and code refactoring, and Alex Newhouse (@AlexBNewhouse) for his help with Telepathy v1.
+All tools created by Jordan Wildon (@jordanwildon). Special thanks go to [Giacomo Giallombardo](https://github.com/aaarghhh) for adding additional features and code refactoring, [jkctech](https://github.com/jkctech/Telegram-Trilateration) for collaboration on location lookup via the 'People Near Me' feature, and Alex Newhouse (@AlexBNewhouse) for his help with Telepathy v1. Shoutout also to [Francesco Poldi](https://github.com/noneprivacy) for being a sounding board and offering help and advice when it comes to bug fixes.
 
 Where possible, credit for the use of this tool in published research is desired, but not required. This can either come in the form of crediting the author, or crediting Telepathy itself (preferably with a link).

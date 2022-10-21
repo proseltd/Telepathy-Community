@@ -224,8 +224,8 @@ def cli(
                             _desc = process_description(
                                 group_description, user_language
                                 )
-                            description_text = _desc["group_description"]
-                            original_language = _mess[
+                            
+                            original_language = _desc[
                                 "original_language"
                             ]
                             translated_description = _desc["translated_text"]
@@ -423,7 +423,7 @@ def cli(
                         _desc = process_description(
                             group_description, user_language
                             )
-                        description_text = _desc["description_text"]
+
                         original_language = _desc[
                             "original_language"
                         ]
@@ -634,10 +634,10 @@ def cli(
                             forwards_df = pd.DataFrame(
                                 forwards_list,
                                 columns=[
-                                    "To",
-                                    "To_title",
-                                    "From",
-                                    "From_ID",
+                                    "Source",
+                                    "Target",
+                                    "Label",
+                                    "Source_ID",
                                     "Username",
                                     "Timestamp",
                                 ],
@@ -689,20 +689,20 @@ def cli(
                                                 forwards_df = pd.DataFrame(
                                                     forwards_list,
                                                     columns=[
-                                                        "To username",
-                                                        "To name",
-                                                        "From",
-                                                        "From ID",
-                                                        "From_username",
+                                                        "Source",
+                                                        "Target",
+                                                        "Label",
+                                                        "Source_ID",
+                                                        "Username",
                                                         "Timestamp",
                                                     ],
                                                 )
 
                                                 forwards_list.append(
                                                     [
+                                                        result,
                                                         t,
                                                         to_title,
-                                                        result,
                                                         f_from_id,
                                                         username,
                                                         timestamp,
@@ -734,8 +734,8 @@ def cli(
                                             pass
 
                             if forward_count >= 15:
-                                forwards_found = forwards_df.From.count()
-                                value_count = forwards_df["From"].value_counts()
+                                forwards_found = forwards_df.Source.count()
+                                value_count = forwards_df["Source"].value_counts()
                                 df01 = value_count.rename_axis("unique_values").reset_index(
                                     name="counts"
                                 )
@@ -782,7 +782,7 @@ def cli(
                                     + " forwarded messages"
                                 )
 
-                                df02 = forwards_df.From.unique()
+                                df02 = forwards_df.Source.unique()
                                 unique_forwards = len(df02)
 
                                 #print("\n")
@@ -894,18 +894,20 @@ def cli(
                                                         "Translated_text",
                                                         "Translation_confidence",
                                                         "Timestamp",
+                                                        "Has_media",
                                                         "Reply",
                                                         "Views",
+                                                        "URL",
                                                     ],
                                                 )
 
                                                 c_forwards = pd.DataFrame(
                                                     forwards_list,
                                                     columns=[
-                                                        "To",
-                                                        "To_title",
-                                                        "From",
-                                                        "From_ID",
+                                                        "Source",
+                                                        "Target",
+                                                        "Label",
+                                                        "Source_ID",
                                                         "Username",
                                                         "Timestamp",
                                                     ],
@@ -940,6 +942,7 @@ def cli(
                                                                 "Group name",
                                                             ],
                                                         )
+                                                        
                                                         c_replies = pd.DataFrame(
                                                             replies_list,
                                                             columns=[
@@ -1044,7 +1047,6 @@ def cli(
                                                         #print("#### TODO: REACTIONS")
 
                                                 if media_archive == True:
-                                                    #add a progress bar for each file download
                                                     if message.media:
                                                         path = await message.download_media(
                                                             file=media_directory
@@ -1052,8 +1054,13 @@ def cli(
                                                         files.append(path)
                                                     else:
                                                         pass
-
                                                 
+                                                if message.media is not None:
+                                                    has_media = "TRUE"
+                                                else:
+                                                    has_media = 'FALSE'
+
+                                                post_url = "https://t.me/s/" + t + "/" + message.id
 
                                                 message_list.append(
                                                     [
@@ -1066,8 +1073,10 @@ def cli(
                                                         translated_text,
                                                         translation_confidence,
                                                         timestamp,
+                                                        has_media,
                                                         reply,
                                                         views,
+                                                        post_url,
                                                     ]
                                                 )
 
@@ -1157,16 +1166,14 @@ def cli(
 
                                                             forwards_list.append(
                                                                 [
+                                                                    result,
                                                                     t,
                                                                     to_title,
-                                                                    result,
                                                                     f_from_id,
                                                                     username,
                                                                     timestamp,
                                                                 ]
                                                             )
-
-                                                        
 
                                                     except ChannelPrivateError:
                                                         private_count += 1
@@ -1182,6 +1189,11 @@ def cli(
                                         else:
                                             message_list.append(
                                                 [
+                                                    "None",
+                                                    "None",
+                                                    "None",
+                                                    "None",
+                                                    "None",
                                                     "None",
                                                     "None",
                                                     "None",
@@ -1305,8 +1317,6 @@ def cli(
                                     df04 = c_archive.Display_name.unique()
                                     plength = len(df03)
                                     unique_active = len(df04)
-                                    # one day this'll work out sleeping times
-                                    # print(c_t_stats)
 
                                 elif reply_analysis is True:
                                     if len(replies_list) > 0:
@@ -1441,12 +1451,11 @@ def cli(
                                         color_print_green(
                                             "  ├  Total unique repliers: ", str(replier_unique)
                                         )
-                                        # add a figure for unique current posters who are active
 
                                 if forwards_check is True:
                                     if forward_count >= 15:
-                                        forwards_found = c_forwards.From.count()
-                                        value_count = c_forwards["From"].value_counts()
+                                        forwards_found = c_forwards.Source.count()
+                                        value_count = c_forwards["Source"].value_counts()
                                         c_f_stats = value_count.rename_axis(
                                             "unique_values"
                                         ).reset_index(name="counts")
@@ -1499,7 +1508,7 @@ def cli(
                                             + " forwarded messages"
                                         )
 
-                                        c_f_unique = c_forwards.From.unique()
+                                        c_f_unique = c_forwards.Source.unique()
                                         unique_forwards = len(c_f_unique)
 
                                         #print("\n")
@@ -1700,7 +1709,7 @@ def cli(
 
                         with open(
                             save_file, "w+", encoding="utf-8"
-                        ) as f:  # could one day append, including access time to differentiate
+                        ) as f:  
                             user_df.to_csv(f, sep=";", index=False)
 
                         total = len(locations_list)
@@ -1713,8 +1722,7 @@ def cli(
                         color_print_green("  ├  Total users found:  ", str(total))
                         color_print_green("  └  Location list saved to: ", save_file)
 
-                        # can also do the same for channels with similar output file to users
-                        # may one day add trilateration to find users closest to exact point
+                        user_df.iloc[0:0]
                         
     with client:
         client.loop.run_until_complete(main())

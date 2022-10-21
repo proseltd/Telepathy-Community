@@ -1,3 +1,12 @@
+v2.2.51/58 21.10.2022 -- Building upon the major update, a few errors have been fixed, 
+                       installation has been improved and stablized, and several
+                       new features have been added, including:
+                        - Added "has media" column to archive files.
+                        - Added post URL to archive file.
+                        - Additional investigation resources added to the README.
+                        - Maximise edgelist compatability with Gephi.
+                        - Additional support for multiple location lookups at once.
+
 v2.2.50 16.10.2022 -- Major update! Code refactoring, reply retrieval,
                       translated descriptions, speedier decryption of media, support for 
                       analyzing private groups, bug fixes and much more!
