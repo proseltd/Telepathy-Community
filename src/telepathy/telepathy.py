@@ -17,11 +17,10 @@ import os
 import getpass
 import click
 import re
-import textwrap
 import time
-import pprint
 
-from telepathy.utils import (
+
+from utils import (
     print_banner,
     color_print_green,
     populate_user,
@@ -29,7 +28,8 @@ from telepathy.utils import (
     process_description,
     parse_tg_date,
     parse_html_page,
-    print_shell
+    print_shell,
+    createPlaceholdeCls
 )
 import const as const
 
@@ -49,8 +49,6 @@ from telethon.tl.functions.messages import GetDialogsRequest
 from telethon import TelegramClient, functions, types, utils
 from telethon.utils import get_display_name, get_message_id
 from alive_progress import alive_bar
-from bs4 import BeautifulSoup
-
 
 @click.command()
 @click.option(
@@ -209,9 +207,7 @@ def cli(
                 exports = []
 
                 print("Exporting...")
-
                 # progress bar
-
                 for Dialog in await client.get_dialogs():
                     try:
                         if Dialog.entity.username:
@@ -296,13 +292,10 @@ def cli(
 
                     except AttributeError:
                         pass
-
             else:
-
                 for t in target:
                     target_clean = t
                     alphanumeric = ""
-                    
 
                     for character in target_clean:
                         if character.isalnum():
@@ -426,24 +419,6 @@ def cli(
                         ]
 
                         translated_description = _desc["translated_text"]
-
-                        preferredWidth = 70
-                        descript = Fore.GREEN + "Description: " + Style.RESET_ALL
-                        prefix = descript 
-                        wrapper_d = textwrap.TextWrapper(
-                            initial_indent=prefix,
-                            width=preferredWidth,
-                            subsequent_indent="                  ",
-                        )
-
-                        trans_descript = Fore.GREEN + "Translated: " + Style.RESET_ALL
-                        prefix = trans_descript
-                        wrapper_td = textwrap.TextWrapper(
-                            initial_indent=prefix,
-                            width=preferredWidth,
-                            subsequent_indent="                  ",
-                        )
-
                         group_description = ('"' + group_description + '"')
 
                         if entity.broadcast is True:
@@ -467,22 +442,11 @@ def cli(
                         else:
                             group_status = "None"
 
-                        restrict = Fore.GREEN + "Restrictions:" + Style.RESET_ALL
-                        prefix = restrict + " "
-                        preferredWidth = 70
-                        wrapper_r = textwrap.TextWrapper(
-                            initial_indent=prefix,
-                            width=preferredWidth,
-                            subsequent_indent="                   ",
-                        )
                         found_participants = 0
-                        found_participants = 0
-
+                        found_percentage = 0
                         if chat_type != "Channel":
                             members = []
-                            all_participants = []
                             all_participants = await client.get_participants(t, limit=5000)
-
                             members_df = None
                             for user in all_participants:
                                 members_df = pd.DataFrame(
@@ -714,42 +678,40 @@ def cli(
                                 df01 = value_count.rename_axis("unique_values").reset_index(
                                     name="counts"
                                 )
-
-                                report_forward = object()
-                                setattr(report_forward, "forward_one", (
+                                report_forward = createPlaceholdeCls()
+                                report_forward.forward_one = (
                                     str(df01.iloc[0]["unique_values"])
                                     + ", "
                                     + str(df01.iloc[0]["counts"])
                                     + " forwarded messages"
-                                ))
-                                setattr(report_forward, "forward_two", (
-                                    str(df01.iloc[1]["unique_values"])
-                                    + ", "
-                                    + str(df01.iloc[1]["counts"])
-                                    + " forwarded messages"
-                                ))
-                                setattr(report_forward, "forward_three", (
-                                    str(df01.iloc[2]["unique_values"])
-                                    + ", "
-                                    + str(df01.iloc[2]["counts"])
-                                    + " forwarded messages"
-                                ))
-                                setattr(report_forward, "forward_four", (
-                                    str(df01.iloc[3]["unique_values"])
-                                    + ", "
-                                    + str(df01.iloc[3]["counts"])
-                                    + " forwarded messages"
-                                ))
-                                setattr(report_forward, "forward_five", (
-                                    str(df01.iloc[4]["unique_values"])
-                                    + ", "
-                                    + str(df01.iloc[4]["counts"])
-                                    + " forwarded messages"
-                                ))
-
+                                )
+                                report_forward.forward_two = (
+                                        str(df01.iloc[1]["unique_values"])
+                                        + ", "
+                                        + str(df01.iloc[1]["counts"])
+                                        + " forwarded messages"
+                                )
+                                report_forward.forward_three = (
+                                        str(df01.iloc[2]["unique_values"])
+                                        + ", "
+                                        + str(df01.iloc[2]["counts"])
+                                        + " forwarded messages"
+                                )
+                                report_forward.forward_four = (
+                                        str(df01.iloc[3]["unique_values"])
+                                        + ", "
+                                        + str(df01.iloc[3]["counts"])
+                                        + " forwarded messages"
+                                )
+                                report_forward.forward_five = (
+                                        str(df01.iloc[4]["unique_values"])
+                                        + ", "
+                                        + str(df01.iloc[4]["counts"])
+                                        + " forwarded messages"
+                                )
                                 df02 = forwards_df.Source.unique()
-                                setattr(report_forward, "unique_forwards", len(df02))
-                                setattr(report_forward, "edgelist_file", len(df02))
+                                report_forward.unique_forwards = len(df02)
+                                report_forward.edgelist_file = edgelist_file
                                 print_shell("forwarder_stat",report_forward)
 
                             else:
@@ -991,7 +953,7 @@ def cli(
                                                 else:
                                                     has_media = 'FALSE'
 
-                                                post_url = "https://t.me/s/" + t + "/" + message.id
+                                                post_url = "https://t.me/s/" + t + "/" + str(message.id)
 
                                                 message_list.append(
                                                     [
@@ -1189,9 +1151,10 @@ def cli(
                                     pass
 
                                 messages_found = int(c_archive.To.count()) - 1
-                                report_obj = object()
-                                setattr(report_obj,"messages_found", messages_found)
-                                setattr(report_obj,"file_archive", file_archive)
+                                report_obj = createPlaceholdeCls()
+                                report_obj.messages_found = messages_found
+                                report_obj.file_archive = file_archive
+
                                 if chat_type == "Channel":
                                     print_shell("channel_stat", report_obj)
                                 else:
@@ -1209,40 +1172,44 @@ def cli(
                                     '''
                                     #message stats, top words
 
-                                    setattr(report_obj, "poster_one", (
+                                    report_obj.poster_one = (
                                         str(df03.iloc[0]["unique_values"])
                                         + ", "
                                         + str(df03.iloc[0]["counts"])
                                         + " messages"
-                                    ))
-                                    setattr(report_obj, "poster_two", (
+                                    )
+
+                                    report_obj.poster_two = (
                                         str(df03.iloc[1]["unique_values"])
                                         + ", "
                                         + str(df03.iloc[2]["counts"])
                                         + " messages"
-                                    ))
-                                    setattr(report_obj, "poster_three", (
+                                    )
+
+                                    report_obj.poster_three = (
                                         str(df03.iloc[2]["unique_values"])
                                         + ", "
                                         + str(df03.iloc[2]["counts"])
                                         + " messages"
-                                    ))
-                                    setattr(report_obj, "poster_four", (
+                                    )
+
+                                    report_obj.poster_four = (
                                         str(df03.iloc[3]["unique_values"])
                                         + ", "
                                         + df03.iloc[3]["counts"]
                                         + " messages"
-                                    ))
-                                    setattr(report_obj, "poster_five", (
+                                    )
+
+                                    report_obj.poster_five = (
                                         str(df03.iloc[4]["unique_values"])
                                         + ", "
                                         + str(df03.iloc[4]["counts"])
                                         + " messages"
-                                    ))
+                                    )
 
                                     df04 = c_archive.Display_name.unique()
                                     unique_active = len(df04)
-                                    setattr(report_obj, "unique_active", unique_active)
+                                    report_obj.unique_active = unique_active
                                     print_shell("group_stat", report_obj)
 
                                 if reply_analysis is True:
@@ -1253,44 +1220,50 @@ def cli(
                                             "unique_values"
                                         ).reset_index(name="counts")
 
-                                        repliers = object()
-                                        setattr(repliers, "replier_one", (
+                                        repliers = createPlaceholdeCls()
+                                        repliers.replier_one = (
                                             str(replier_df.iloc[0]["unique_values"])
                                             + ", "
                                             + str(replier_df.iloc[0]["counts"])
                                             + " replies"
-                                        ))
-                                        setattr(repliers, "replier_two", (
+                                        )
+
+                                        repliers.replier_two = (
                                             str(replier_df.iloc[1]["unique_values"])
                                             + ", "
                                             + str(replier_df.iloc[1]["counts"])
                                             + " replies"
-                                        ))
-                                        setattr(repliers, "replier_three", (
+                                        )
+
+                                        repliers.replier_three = (
                                             str(replier_df.iloc[2]["unique_values"])
                                             + ", "
                                             + str(replier_df.iloc[2]["counts"])
                                             + " replies"
-                                        ))
-                                        setattr(repliers, "replier_four", (
+                                        )
+
+                                        repliers.replier_four = (
                                             str(replier_df.iloc[3]["unique_values"])
                                             + ", "
                                             + str(replier_df.iloc[3]["counts"])
                                             + " replies"
-                                        ))
-                                        setattr(repliers, "replier_five",  (
+                                        )
+
+                                        repliers.replier_five = (
                                             str(replier_df.iloc[3]["counts"])
                                             + ", "
                                             + str(replier_df.iloc[4]["counts"])
                                             + " replies"
-                                        ))
+                                        )
+
                                         replier_count_df = c_repliers["User ID"].unique()
                                         replier_unique = len(replier_count_df)
-                                        setattr(repliers,"user_replier_list_len", len(user_replier_list))
-                                        setattr(repliers, "reply_file_archive", str(reply_file_archive))
-                                        setattr(repliers, "reply_memberlist_filename", str(reply_memberlist_filename))
-                                        setattr(repliers,"replier_unique", str(replier_unique))
-                                        print_shell("reply_stat",repliers)
+
+                                        repliers.user_replier_list_len = len(user_replier_list)
+                                        repliers.reply_file_archive = str(reply_file_archive)
+                                        repliers.reply_memberlist_filename = str(reply_memberlist_filename)
+                                        repliers.replier_unique = str(replier_unique)
+                                        print_shell("reply_stat", repliers)
 
                                 if forwards_check is True:
                                     if forward_count >= 15:
@@ -1299,41 +1272,42 @@ def cli(
                                         c_f_stats = value_count.rename_axis(
                                             "unique_values"
                                         ).reset_index(name="counts")
-                                        report_forward = object()
-                                        setattr(report_forward, "forward_one", (
+                                        report_forward = createPlaceholdeCls()
+                                        report_forward.forward_one = (
                                                 str(c_f_stats.iloc[0]["unique_values"])
                                                 + ", "
                                                 + str(c_f_stats.iloc[0]["counts"])
                                                 + " forwarded messages"
-                                        ))
-                                        setattr(report_forward, "forward_two", (
+                                        )
+                                        report_forward.forward_two = (
                                                 str(c_f_stats.iloc[1]["unique_values"])
                                                 + ", "
                                                 + str(c_f_stats.iloc[1]["counts"])
                                                 + " forwarded messages"
-                                        ))
-                                        setattr(report_forward, "forward_three", (
+                                        )
+                                        report_forward.forward_three = (
                                                 str(c_f_stats.iloc[2]["unique_values"])
                                                 + ", "
                                                 + str(c_f_stats.iloc[2]["counts"])
                                                 + " forwarded messages"
-                                        ))
-                                        setattr(report_forward, "forward_four", (
+                                        )
+                                        report_forward.forward_four = (
                                                 str(c_f_stats.iloc[3]["unique_values"])
                                                 + ", "
                                                 + str(c_f_stats.iloc[3]["counts"])
                                                 + " forwarded messages"
-                                        ))
-                                        setattr(report_forward, "forward_five", (
+                                        )
+                                        report_forward.forward_five = (
                                                 str(c_f_stats.iloc[4]["unique_values"])
                                                 + ", "
                                                 + str(c_f_stats.iloc[4]["counts"])
                                                 + " forwarded messages"
-                                        ))
+                                        )
+
                                         c_f_unique = c_forwards.Source.unique()
-                                        setattr(report_forward, "unique_forwards", len(c_f_unique))
-                                        setattr(report_forward, "edgelist_file", len(df02))
-                                        setattr(report_forward, "private_count", private_count)
+                                        report_forward.unique_forwards = len(c_f_unique)
+                                        report_forward.edgelist_file = edgelist_file
+                                        report_forward.private_count = private_count
                                         print_shell("forwarder_stat", report_forward)
                                     else:
                                         #print("\n")
@@ -1459,11 +1433,11 @@ def cli(
                             except:
                                 pass
 
-                        distance_obj = object()
-                        setattr(distance_obj, "d500", 0)
-                        setattr(distance_obj, "d1000", 0)
-                        setattr(distance_obj, "d2000", 0)
-                        setattr(distance_obj, "d3000", 0)
+                        distance_obj = createPlaceholdeCls()
+                        distance_obj.d500 = 0
+                        distance_obj.d1000 = 0
+                        distance_obj.d2000 = 0
+                        distance_obj.d3000 = 0
 
                         for account, distance in user_df.itertuples(index=False):
                             account = int(account)
@@ -1486,9 +1460,9 @@ def cli(
                         ) as f:  # could one day append, including access time to differentiate
                             user_df.to_csv(f, sep=";", index=False)
 
-                        setattr(distance_obj, "save_file", save_file)
-                        setattr(distance_obj, "total", total)
                         total = len(locations_list)
+                        distance_obj.save_file = save_file
+                        distance_obj.total = total
                         print_shell("location_report",distance_obj)
                         # can also do the same for channels with similar output file to users
                         # may one day add trilateration to find users closest to exact point

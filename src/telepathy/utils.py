@@ -1,10 +1,16 @@
 from colorama import Fore, Back, Style
 from googletrans import Translator, constants
-from telepathy.const import __version__, user_agent
+from const import __version__, user_agent
 import requests
 import textwrap
 from bs4 import BeautifulSoup
 import random
+
+def createPlaceholdeCls():
+    class Object(object):
+        pass
+    a = Object()
+    return a
 
 def print_banner():
     print(
