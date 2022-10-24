@@ -20,7 +20,7 @@ import re
 import time
 
 
-from utils import (
+from telepathy.utils import (
     print_banner,
     color_print_green,
     populate_user,
@@ -31,7 +31,7 @@ from utils import (
     print_shell,
     createPlaceholdeCls
 )
-import const as const
+import telepathy.const as const
 
 from colorama import Fore, Back, Style
 

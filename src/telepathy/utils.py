@@ -1,6 +1,6 @@
 from colorama import Fore, Back, Style
 from googletrans import Translator, constants
-from const import __version__, user_agent
+from telepathy.const import __version__, user_agent
 import requests
 import textwrap
 from bs4 import BeautifulSoup
