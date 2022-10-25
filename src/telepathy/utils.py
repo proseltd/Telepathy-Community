@@ -179,7 +179,7 @@ def generate_textwrap(text_string, size=70):
 
 def print_shell(type, obj):
     if type == "user":
-        color_print_green(" [+] ", "User details for " + obj.targe)
+        color_print_green(" [+] ", "User details for " + obj.target)
         color_print_green("  ├  Username: ", str(obj.username))
         color_print_green("  ├  Name: ", str(obj.user_full_name))
         color_print_green("  ├  Verification: ", str(obj.verified))

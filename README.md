@@ -83,10 +83,12 @@ $ telepathy -t durov -c -m
 
 - **'--user', '-u' [USER]**
 
-Looks up a specified user ID. This will only work if your account has "encountered" the user before (for example, after archiving a group).
+Looks up a specified user ID. This will only work if your account has "encountered" the user before (for example, after archiving a group), you can specify User ID or @nickname
 
 ```
 $ telepathy -t 0123456789 -u
+
+$ telepathy -t @test_user -u
 ```
 
 
