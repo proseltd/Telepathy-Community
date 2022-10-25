@@ -31,14 +31,13 @@ from telepathy.utils import (
     print_shell,
     createPlaceholdeCls
 )
-import telepathy.const as const
 
 from colorama import Fore, Back, Style
-
 from telethon.errors import SessionPasswordNeededError, ChannelPrivateError
 from telethon.tl.types import (
     InputPeerEmpty,
     PeerUser,
+    User,
     PeerChat,
     PeerChannel,
     PeerLocated,
@@ -394,7 +393,6 @@ def cli(
                             break
 
                         if entity.username:
-                            name = entity.title
                             group_url = "http://t.me/" + entity.username
                             group_username = entity.username
                             web_req = parse_html_page(group_url)
@@ -420,6 +418,10 @@ def cli(
 
                         translated_description = _desc["translated_text"]
                         group_description = ('"' + group_description + '"')
+
+                        if(entity.__class__ == User):
+                            color_print_green(" [!] ", "U can't search user using flag -c, run Telepathy using the flag -u.")
+                            exit(1)
 
                         if entity.broadcast is True:
                             chat_type = "Channel"
@@ -1321,9 +1323,11 @@ def cli(
                     if user_check == True:
                         my_user = None
                         try:
-
-                            user = int(t)
-                            my_user = await client.get_entity(PeerUser(int(user)))
+                            if "@" in t:
+                                my_user = await client.get_entity(t)
+                            else:
+                                user = int(t)
+                                my_user = await client.get_entity(PeerUser(int(user)))
 
                             user_first_name = my_user.first_name
                             user_last_name = my_user.last_name
