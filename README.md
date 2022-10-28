@@ -1,6 +1,15 @@
+Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.3.2.
+
+Telepathy has been described as the "swiss army knife of Telegram tools," allowing OSINT analysts, researchers and digital investigators to archive Telegram chats (including replies, media content, comments and reactions), gather memberlists, lookup users by given location, analyze top posters in a chat, map forwarded messages, and more.
+
+The toolkit has already seen a wide variety of use cases, including but not limited to: in investigative and data journalism, by academic and research institutions, and for intelligence gathering and analysis.
 
 
-Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.2.58.
+## !! IMPORTANT: 
+With the update to 2.3.0, you will need to delete your login.txt file to prevent errors if using the alternative login feature. Upon first use, Telepathy will guide you through setup of the details once again. To work around this, instead of deleting and recreating the file, you can add a newline character to the end of your current API details to ensure Telepathy scans the file correctly.
+
+A note on unique identifiers per account: You will notice that depending on which alternative account you use, the access hash will vary. The same will happen with User IDs, which are unique to each Telegram account accessing them. For deeper data analysis based on user IDs, this is important to bare in mind as users will have as many unique IDs as accounts you've used to access information. In future, Telepathy may include a feature to assign unique identifier per account found based on a hash of the available information, regardless of which account accessed the data.
+
 
 
 ## Installation
@@ -35,7 +44,7 @@ telepathy [OPTIONS]
 Options:
 - **'--target', '-t' [CHAT]**
 
-this option will identify the target of the scan. The specified chat must be public. To get the chat name, look for the 't.me/chatname' link, and subtract the 't.me/'.
+this option will identify the target of the scan. The specified chat must be public or have a private link. To get the chat name, look for the 't.me/chatname' link, and subtract the 't.me/'.
 
 For example:
 
@@ -48,7 +57,9 @@ The default is a basic scan which will find the title, description, number of pa
 
 - **'--comprehensive', '-c'**
 
-A comprehensive scan will offer the same information as the basic scan, but will also archive a chat's message history.
+A comprehensive scan will offer the same information as the basic scan, but will also archive a chat's message history, gather the number of reactions, archive how many times a message has been forwarded, the number of replies to each message, and more.
+
+Reaction lists are included in the archive file, including basic calculations of engagement rate. Only the most-common reactions are listed, with the total including all possible reactions. Currently, Telepathy calculates engagement rates based on forwards, comments and reactions seperately, with a calculation based on post views and one based on chat participant count. In future, Telepathy may include deeper analytics which can be cross-compared between chats based on a combination of these metrics, fixing for when comments, reactions or forwards are allowed or disallowed in a given chat.
 
 For example:
 
@@ -59,12 +70,14 @@ $ telepathy -t durov -c
 
 - **'--forwards', '-f'**
 
-This flag will create an edgelist based on messages forwarded into a chat. It can be used alongside either a default or comprehensive scan.
+This flag will create an edgelist based on messages forwarded into a chat. It can be used alongside either a default or comprehensive scan. Since 2.3.0, Telepathy now formats these edgelists to maximize compatability with Gephi.
 
 For example:
 
 ```
 $ telepathy -t durov -f
+
+$ telepathy -t durov -c -f
 ```
 
 
@@ -72,18 +85,18 @@ $ telepathy -t durov -f
 
 Use this flag to include media archiving alongside a comprehensive scan. This makes the process take significantly longer and should also be used with caution: you'll download all media content from the target chat, and it's up to you to not store illegal files on your system.
 
-Since 2.2.0, downloading all media files will also generate a CSV file listing the files' metadata. 
-
-For example, this will run a comprehensive scan, including media archiving:
+To archive media, you must run a comprehensive scan:
 
 ```
 $ telepathy -t durov -c -m
 ```
 
+Once files have downloaded, you can run exiftool on the associated media directory to gather deeper insights on the files, their metadata, and in some cases attribute who might be behind an anonymous channel. Further details are in the "bonus investigations tips" section of this README.
 
-- **'--user', '-u' [USER]**
 
-Looks up a specified user ID. This will only work if your account has "encountered" the user before (for example, after archiving a group), you can specify User ID or @nickname
+- **'--user', '-u'**
+
+Looks up a specified user. This will only work if your account has "encountered" the user before (for example, after archiving a group), you can specify User ID or @nickname. If looking up by username, it's not always necessary for your account to have already seen the user.
 
 ```
 $ telepathy -t 0123456789 -u
@@ -92,27 +105,29 @@ $ telepathy -t @test_user -u
 ```
 
 
-- **'--location', '-l' [COORDINATES]**
+- **'--location', '-l']**
 
-Finds users near to specified coordinates. Input should be longitude followed by latitude, seperated by a comma. This feature only works if your Telegram account has a profile image which is set to publicly viewable.
+Finds users near to specified coordinates. Input should be longitude followed by latitude, seperated by a comma. This feature only works if your Telegram account has a profile image which is set to be publicly viewable.
+
+While searches for multiple locations at once may work in some cases, Telegram appears to have a limit on how quickly an account can cycle through locations. At the time of writing, this appears to be at least ten minutes. Further location scanning support while using multiple accounts is being explored for a future release.
 
 ```
 $ telepathy -t 51.5032973,-0.1217424 -l
 ```
 
 
-- **'--alt', '-a'**
+- **'--alt', '-a' [NUMBER]**
 
-Flag for running Telepathy from an alternative number. You can use the same API key and Hash but authenticate with a different phone number. Allows for running multiple scans at the same time.
+Flag for running Telepathy from an alternative number or API details. You can use the same API key and Hash but authenticate with a different phone number. This allows for running multiple scans at the same time. Telepathy will default to the first details you offer, and up to four others can be added. Please see the notes at the top of this README for information regarding limitations with user IDs using this method.
 
 ```
-$ telepathy -t Durov -c -a
+$ telepathy -t Durov -c -a 1
 ```
 
 
 - **'--export', '-e'**
 
-Exports all chats your account is part of to a CSV file. In a future release, this may assist with setting up multiple accounts following the same groups.
+Exports all chats your account is part of to a CSV file. In a future release, this may assist with provisioning new accounts to automatically following the listed groups.
 
 ```
 $ telepathy -e
@@ -121,10 +136,19 @@ $ telepathy -e
 
 - **'--reply', '-r'**
 
-Flag for enable the reply in the channel, it will map users who replied in the channel and it will dump the full conversation chain 
+Flag for enabling channel reply retrieval, this will archive replies and list users who replied to messages in the target channel. 
 
 ```
 $ telepathy -t [CHANNEL] -c -r 
+```
+
+
+- **'--translate', '-tr'**
+
+Flag for enabling auotmatic translation (currently only into English) during message retrieval.
+
+```
+$ telepathy -t [CHANNEL] -c -tr
 ```
 
 
@@ -135,12 +159,12 @@ $ telepathy -t [CHANNEL] -c -r
 $ cd ./telepathy/telepathy_files/CHATNAME/media
 $ exiftool * > metadata.txt
 ```
- - Group and inferred channel memberlists offer a point of further investigation for usernames found. By using Maigret, you can look up where else a username has been used. While this is not accurate in all cases, it's been proven to be useful for handles that are often reused. In this case, remember to verify your findings to avoid false positives.
+ - Group and inferred channel memberlists offer a point of further investigation for usernames found. By using [Maigret](https://github.com/soxoj/maigret), you can look up where else a username has been used online. While this is not accurate in all cases, it's been proven to be helpful for identifying where a person has reused handles across platforms. In this case, remember to verify your findings to avoid false positives.
 
 
 ## A note on how Telegram works
 
-Telegram chats are organised into three key types: Channels, Megagroups/Supergroups and Gigagroups. Each module works slightly differently depending on the chat type. Channels can have seemingly unlimited subscribers and are where an admin will broadcast messages to an audience, Megagroups can have up to 200,000 members, each of whom can participate (if not restricted), and Gigagroups sit somewhere between the two.
+Telegram chats are organised into three key types: Channels, Megagroups/Supergroups and Gigagroups. Each option works slightly differently depending on the chat type. Channels can have seemingly unlimited subscribers and are where an admin will broadcast messages to an audience, Megagroups can have up to 200,000 members, each of whom can participate (if not restricted), and Gigagroups sit somewhere between the two.
 
 
 ## Upcoming changes
@@ -149,27 +173,24 @@ In some environments (particularly Windows), Telepathy struggles to effectively 
 Upcoming features include:
 
   - [ ] Adding a time specification flag to set archiving for specific period.
-  - [ ] The ability to gather the number of reactions to messages, including statistics on engagement rate.
+  - [x] The ability to gather the number of reactions to messages, including statistics on engagement rate.
   - [ ] Finding a method to once again gather complete memberlists (currently restricted by the API).
   - [ ] Improved statistics: including timestamp analysis for channels.
   - [ ] Generating an entirely automated complete report, including visualisation for some statistics.
   - [ ] Hate speech analytics.
-  - [x] Maximise compatibility of edgelists with Gephi.
   - [ ] Include sockpuppet account provisioning (creation of accounts from previous exported lists).
   - [ ] Listing who has group admin rights in memberlists.
-  - [ ] Media downloaded in the background to increase efficiency.
-  - [ ] When media archiving is flagged, the location of downloaded content will be added to the archive file.
-  - [ ] Exploring, and potentially integrating, media cross checks based on https://github.com/conflict-investigations/media-search-engine.
+  - [ ] Media downloaded in the background to increase efficiency or progress bars for media downloads to give a better estimation of runtime.
+  - [x] When media archiving is flagged, the location of downloaded content will be added to the archive file.
+  - [ ] Exploring, and potentially integrating, media cross-checks based on https://github.com/conflict-investigations/media-search-engine.
   - [ ] Ensuring inferred channel memberlists don't contain duplicate entries.
   - [ ] Introducing local chat retrival within the location lookup module.
-  - [ ] Adding trilateration option for location lookup to aid better location matching.
-  - [ ] Further code refactoring to ensure long-term maintainability.
-  - [ ] Progress bars for media downloads to give a better estimation of runtime.
-  - [ ] Adding additional alternative logins.
+  - [x] Further code refactoring to ensure long-term maintainability.
+  - [x] Adding additional alternative logins.
   - [ ] Improved language support.
-  - [ ] Ensure inferred channel memberlists (based on repliers) contains each account only once.
   - [ ] Correctly define destinction between reply (as in a chat) and comment (as in channel).
-
+  - [ ] Exploration of whether channel events can be included, such as name changes.
+  - [x] Including last seen on user lookup.
 
 ## feedback
 

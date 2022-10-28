@@ -1,48 +1,65 @@
-v2.2.51/58 21.10.2022 -- Building upon the major update, a few errors have been fixed, 
-                       installation has been improved and stablized, and several
-                       new features have been added, including:
-                        - Added "has media" column to archive files.
-                        - Added post URL to archive file.
-                        - Additional investigation resources added to the README.
-                        - Maximise edgelist compatability with Gephi.
-                        - Additional support for multiple location lookups at once.
+v2.3.0/2 25.10.2022    --  Significant update, including major efficiency tweaks.
 
-v2.2.50 16.10.2022 -- Major update! Code refactoring, reply retrieval,
-                      translated descriptions, speedier decryption of media, support for 
-                      analyzing private groups, bug fixes and much more!
+                          Retrieval of message reactions is here! Gain insights on the
+                          engagement in a chat with new analytics and see how many times
+                          a message has been reacted to, how much it's been forwarded, and
+                          how many replies it has. Message edit date/time is also now available.
+
+                          In addition to that, more changes have been made:
+                          - Engagement rate calculation based on reactions, comments and forwards.
+                          - Speed improvements as part of the ongoing refactoring (up to two messages archived per second).
+                          - Posts are now not translated by default but with the "-tr" flag, speeding up retrieval time.
+                          - Improved location save files based on feedback from OS2INT.
+                          - Addition of up to four alternative logins.
+                          - Telepathy can now look up users by either ID or by username.
+                          - Information about when a user was last online is now part of the user lookup.
+                          - Bug fixes.
+
+v2.2.51/62 21.10.2022 --  Building upon the major update, a few errors have been fixed, 
+                          installation has been improved and stablized, and several
+                          new features have been added, including:
+
+                          - Added "has media" column to archive files.
+                          - Added post URL to archive file.
+                          - Additional investigation resources added to the README.
+                          - Maximise edgelist compatability with Gephi.
+
+v2.2.50 16.10.2022    --  Major update! Code refactoring, reply retrieval,
+                          translated descriptions, speedier decryption of media, support for 
+                          analyzing private groups, bug fixes and much more!
 
 
-v2.1.10 25.08.2022 -- Bugs busted, solved initialization error, efficiency tweaks,
-                      added automatic translations, fixed issue with media archiving,
-                      multiple targets now work with user and location flags.
-                      Added a flag for exporting list of chats the account is a
-                      participant of.
+v2.1.10 25.08.2022    --  Bugs busted, solved initialization error, efficiency tweaks,
+                          added automatic translations, fixed issue with media archiving,
+                          multiple targets now work with user and location flags.
+                          Added a flag for exporting list of chats the account is a
+                          participant of.
 
-v2.1.9, 16.08.2022 -- Added JSON export flag.
+v2.1.9, 16.08.2022    --  Added JSON export flag.
 
-v2.1.4/8, 09.08.2022 -- Added support for multiple clients. Bug fixes.
+v2.1.4/8, 09.08.2022  --  Added support for multiple clients. Bug fixes.
 
-v2.1.0/3, 08.08.2022 -- Added user lookup, location lookup, support for multiple
-                        targets, log file, bug fixes, and improved encoding.
+v2.1.0/3, 08.08.2022  --  Added user lookup, location lookup, support for multiple
+                          targets, log file, bug fixes, and improved encoding.
 
-v2.0.0, 28.07.2022 -- Major update! Everything is simpler, more organized
-                      and complies with updates to Telegram's API. Automated
-                      statistics are included, as well as a few more toys,
-                      with more to come!
+v2.0.0, 28.07.2022    --  Major update! Everything is simpler, more organized
+                          and complies with updates to Telegram's API. Automated
+                          statistics are included, as well as a few more toys,
+                          with more to come!
 
-v1.1.15, 25.04.2022 -- Fixed locations module, added phone number retrieval to
-                        the participants module, improved documentation.
+v1.1.15, 25.04.2022   --  Fixed locations module, added phone number retrieval to
+                          the participants module, improved documentation.
 
-v1.1.13/14, 21.04.2022 -- Bug fixes.
+v1.1.13/14, 21.04.2022--  Bug fixes.
 
-v1.1.12, 21.04.2022 -- Fixed file management, updated advanced tools.
+v1.1.12, 21.04.2022   --  Fixed file management, updated advanced tools.
 
-v1.1.4/11, 16.04.2022 -- Bug fixes.
+v1.1.4/11, 16.04.2022 --  Bug fixes.
 
-v1.1.3, 16.04.2022 -- Added support for multiple -n flags.
+v1.1.3, 16.04.2022    --  Added support for multiple -n flags.
 
-v1.1.2, 15.04.2022 -- Bug fixes.
+v1.1.2, 15.04.2022    --  Bug fixes.
 
-v1.1.1, 15.04.2022 -- Updated directory handling.
+v1.1.1, 15.04.2022    --  Updated directory handling.
 
-v1.1.0, 15.04.2022 -- Initial release.
+v1.1.0, 15.04.2022    --  Initial release.

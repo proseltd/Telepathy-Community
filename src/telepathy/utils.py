@@ -1,5 +1,5 @@
-from colorama import Fore, Back, Style
-from googletrans import Translator, constants
+from colorama import Fore, Style
+from googletrans import Translator
 from telepathy.const import __version__, user_agent
 import requests
 import textwrap
@@ -44,7 +44,7 @@ def populate_user(user, group_or_chat):
     if user.username:
         username = user.username
     else:
-        username = "n/a"
+        username = "N/A"
     if user.first_name:
         first_name = user.first_name
     else:
@@ -56,9 +56,13 @@ def populate_user(user, group_or_chat):
     if user.phone:
         phone = user.phone
     else:
-        phone = "n/a"
+        phone = "N/A"
+    if user.id:
+        user_id = user.id
+    else:
+        user_id = "N/A"
     full_name = (first_name + " " + last_name).strip()
-    return [username, full_name, user.id, phone, group_or_chat]
+    return [username, full_name, user_id, phone, group_or_chat]
 
 
 def process_message(mess, user_lang):
@@ -66,20 +70,19 @@ def process_message(mess, user_lang):
     if mess is not None:
         mess_txt = '"' + mess + '"'
     else:
-        mess_txt = "none"
+        mess_txt = "None"
 
-    if mess_txt != "none":
+    if mess_txt != "None":
         translator = Translator()
         detection = translator.detect(mess_txt)
-        language_code = detection.lang
         translation_confidence = detection.confidence
         translation = translator.translate(mess_txt, dest=user_lang)
         original_language = translation.src
         translated_text = translation.text
     else:
         original_language = user_lang
-        translated_text = "n/a"
-        translation_confidence = "n/a"
+        translated_text = "N/A"
+        translation_confidence = "N/A"
 
     return {
         "original_language": original_language,
@@ -92,20 +95,19 @@ def process_description(desc, user_lang):
     if desc is not None:
         desc_txt = '"' + desc + '"'
     else:
-        desc_txt = "none"
+        desc_txt = "None"
 
-    if desc_txt != "none":
+    if desc_txt != "None":
         translator = Translator()
         detection = translator.detect(desc_txt)
-        language_code = detection.lang
         translation_confidence = detection.confidence
         translation = translator.translate(desc_txt, dest=user_lang)
         original_language = translation.src
         translated_text = translation.text
     else:
         original_language = user_lang
-        translated_text = "n/a"
-        translation_confidence = "n/a"
+        translated_text = "N/A"
+        translation_confidence = "N/A"
 
     return {
         "original_language": original_language,
@@ -144,11 +146,9 @@ def parse_html_page(url):
             "div", {"class": ["tgme_page_description"]}
         ).text
         descript = Fore.GREEN + "Description: " + Style.RESET_ALL+ group_description
-        prefix = descript + " "
     except:
         group_description = "None"
         descript = Fore.GREEN + "Description: " + Style.RESET_ALL+ group_description
-        prefix = descript + " "
 
     try:
         group_participants = soup.find(
@@ -163,7 +163,7 @@ def parse_html_page(url):
             .replace("member", "")
         )
     except:
-        total_participants = "Not found"  # could be due to restriction, might need to mention
+        total_participants = "Not found"
 
     return {"name":name,"group_description":group_description, "total_participants":total_participants}
 
@@ -191,6 +191,7 @@ def print_shell(type, obj):
         color_print_green("  ├  Language: ", str(obj.lang_code))
         color_print_green("  ├  Bot: ", str(obj.bot))
         color_print_green("  ├  Scam: ", str(obj.scam))
+        color_print_green("  ├  Last seen: ", str(obj.user_status))
         color_print_green("  └  Restrictions: ", str(obj.user_restrictions))
 
     if type == "location_report":
@@ -204,8 +205,8 @@ def print_shell(type, obj):
 
     if type == "channel_recap" or type == "group_recap":
 
-        d_wrapper = generate_textwrap("Description")
-        td_wrapper = generate_textwrap("Translated Description")
+        d_wrapper = generate_textwrap("Description:")
+        td_wrapper = generate_textwrap("Translated Description:")
 
         color_print_green("  ┬  Chat details", "")
         color_print_green("  ├  Title: ", str(obj.title))
@@ -239,7 +240,7 @@ def print_shell(type, obj):
                 "  ├  Memberlist saved to: ", obj.memberlist_filename
             )
         color_print_green(
-            "  └  ", d_wrapper.fill(obj.group_status)
+            "  └  Restrictions: ", (str(obj.group_status))
         )
 
     if type == "group_stat":
@@ -299,7 +300,7 @@ def print_shell(type, obj):
                 str(obj.reply_memberlist_filename),
             )
         color_print_green(
-            "  ├  Top replier 1: ", str(obj.replier_one)
+            "  ┬  Top replier 1: ", str(obj.replier_one)
         )
         color_print_green(
             "  ├  Top replier 2: ", str(obj.replier_two)
@@ -314,7 +315,7 @@ def print_shell(type, obj):
             "  ├  Top replier 5: ", str(obj.replier_five)
         )
         color_print_green(
-            "  ├  Total unique repliers: ", str(obj.replier_unique)
+            "  └   Total unique repliers: ", str(obj.replier_unique)
         )
 
     if type == "forwarder_stat":
