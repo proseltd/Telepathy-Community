@@ -781,6 +781,8 @@ def cli(
                                 df02 = forwards_df.Source.unique()
                                 report_forward.unique_forwards = len(df02)
                                 report_forward.edgelist_file = edgelist_file
+                                report_forward.forward_count = forward_count
+                                report_forward.forward_found = forwards_found
                                 print_shell("forwarder_stat",report_forward)
                             else:
                                 print(
@@ -1543,10 +1545,11 @@ def cli(
                                         c_f_unique = c_forwards.Source.unique()
 
                                         report_forward.unique_forwards = len(c_f_unique)
+                                        report_forward.forward_count = forward_count
+                                        report_forward.forward_found = forwards_found
                                         report_forward.edgelist_file = edgelist_file
                                         report_forward.private_count = private_count
                                         print_shell("forwarder_stat", report_forward)
-
                                     else:
                                         color_print_green(
                                             " [!] Insufficient forwarded messages found",
