@@ -58,3 +58,9 @@ user_agent = [
     "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/534.9 (KHTML, like Gecko) Chrome/7.0.531.0 Safari/534.9"
     "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.19 (KHTML, like Gecko) Iron/0.2.152.0 Safari/13657880.525",
 ]
+
+telepathy_file = "./telepathy_files/"
+json_file = telepathy_file + "json_files/"
+login = telepathy_file + "login.txt"
+log_file = telepathy_file + "log.csv"
+export_file = telepathy_file + "export.csv"
