@@ -1,10 +1,11 @@
 from colorama import Fore, Style
 from googletrans import Translator
-from telepathy.const import __version__, user_agent
+from const import __version__, user_agent
 import requests
 import textwrap
 from bs4 import BeautifulSoup
 import random
+import os
 
 def createPlaceholdeCls():
     class Object(object):
@@ -26,6 +27,8 @@ def print_banner():
         -- Developed by @jordanwildon | Version """ + __version__ + """.
         """ + Style.RESET_ALL
     )
+
+
 
 def parse_tg_date(dd):
     year = str(format(dd.year, "02d"))
@@ -164,7 +167,6 @@ def parse_html_page(url):
         )
     except:
         total_participants = "Not found"
-
     return {"name":name,"group_description":group_description, "total_participants":total_participants}
 
 
@@ -207,7 +209,6 @@ def print_shell(type, obj):
 
         d_wrapper = generate_textwrap("Description:")
         td_wrapper = generate_textwrap("Translated Description:")
-
         color_print_green("  ┬  Chat details", "")
         color_print_green("  ├  Title: ", str(obj.title))
         color_print_green("  ├  ", d_wrapper.fill(obj.group_description))
@@ -352,3 +353,65 @@ def print_shell(type, obj):
             "  ├  Top forward source 5: ", str(obj.forward_five)
         )
         color_print_green("  └  Edgelist saved to: ", obj.edgelist_file)
+
+def create_path(path_d):
+    if not os.path.exists(path_d):
+        os.makedirs(path_d)
+    return path_d
+
+def create_file_report(save_dir,name,type,extension,file_time,append_time=True):
+    _time_append = ""
+    if append_time:
+        _time_append = "_"+file_time
+    return os.path.join("{}".format(save_dir),"{}{}_{}.{}".format(name,_time_append,type,extension))
+
+def clean_private_invite(url):
+    if "https://t.me/+" in url:
+        return(url.replace('https://t.me/+', 'https://t.me/joinchat/'))
+
+def evaluate_reactions(message):
+    total_reactions = 0
+    reactions = {}
+    if message.reactions:
+        reactions = message.reactions.results
+        i = range(len(reactions))
+        for idx, i in enumerate(reactions):
+            total_reactions = total_reactions + i.count
+            reactions["thumbs_up"] = i.count if i.reaction == '👍' else 0
+            reactions["thumbs_down"] = i.count if i.reaction == '👎' else 0
+            reactions["heart"] = i.count if i.reaction == '❤️' else 0
+            reactions["fire"] = i.count if i.reaction == '🔥' else 0
+            reactions["smile_with_hearts"] = i.count if i.reaction == '🥰' else 0
+            reactions["clap"] = i.count if i.reaction == '👏' else 0
+            reactions["smile"] = i.count if i.reaction == '😁' else 0
+            reactions["thinking"] = i.count if i.reaction == '🤔' else 0
+            reactions["exploding_head"] = i.count if i.reaction == '🤯' else 0
+            reactions["scream"] = i.count if i.reaction == '😱' else 0
+            reactions["angry"] = i.count if i.reaction == '🤬' else 0
+            reactions["single_tear"] = i.count if i.reaction == '😢' else 0
+            reactions["party_popper"] = i.count if i.reaction == '🎉' else 0
+            reactions["starstruck"] = i.count if i.reaction == '🤩' else 0
+            reactions["vomiting"] = i.count if i.reaction == '🤮' else 0
+            reactions["poop"] = i.count if i.reaction == '💩' else 0
+            reactions["praying"] = i.count if i.reaction == '🙏' else 0
+    else:
+        reactions["total_reactions"] = 'N/A'
+        reactions["thumbs_up"] = 'N/A'
+        reactions["thumbs_down"] = 'N/A'
+        reactions["heart"] = 'N/A'
+        reactions["fire"] = 'N/A'
+        reactions["smile_with_hearts"] = 'N/A'
+        reactions["clap"] = 'N/A'
+        reactions["smile"] = 'N/A'
+        reactions["thinking"] = 'N/A'
+        reactions["exploding_head"] = 'N/A'
+        reactions["scream"] = 'N/A'
+        reactions["angry"] = 'N/A'
+        reactions["single_tear"] = 'N/A'
+        reactions["party_popper"] = 'N/A'
+        reactions["starstruck"] = 'N/A'
+        reactions["vomiting"] = 'N/A'
+        reactions["poop"] = 'N/A'
+        reactions["praying"] = 'N/A'
+    return total_reactions, reactions
+
