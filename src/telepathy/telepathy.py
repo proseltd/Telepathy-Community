@@ -27,7 +27,7 @@ from utils import (
     create_path,
     create_file_report,
     clean_private_invite,
-    evaluate_reactions
+    evaluate_reactions,
 )
 
 from telethon.tl.functions.messages import GetHistoryRequest
@@ -50,7 +50,7 @@ from alive_progress import alive_bar
 from colorama import Fore, Style
 from const import telepathy_file
 
-'''
+"""
 try:
         bot = await TelegramClient(os.path.join(base_path, bot_id), API_ID, API_HASH, proxy=proxy).start(bot_token=bot_token)
         bot.id = bot_id
@@ -65,7 +65,9 @@ try:
 
     user_info = user.user.to_dict()
     user_info['token'] = bot_token
-'''
+"""
+
+
 class Group_Chat_Analisys:
 
     save_directory = None
@@ -81,7 +83,7 @@ class Group_Chat_Analisys:
     history = None
     history_count = 0
 
-    _target  = None
+    _target = None
     _target_entity = None
     _alphanumeric = None
     _log_file = None
@@ -89,12 +91,25 @@ class Group_Chat_Analisys:
 
     client = None
 
-    def __init__(self, target, client, log_file, filetime, replies, forwards, comprehensive, media, json, translate):
+    def __init__(
+        self,
+        target,
+        client,
+        log_file,
+        filetime,
+        replies,
+        forwards,
+        comprehensive,
+        media,
+        json,
+        translate,
+        alphanumeric,
+    ):
         self.client = client
         self._target = target
         self._log_file = log_file
         self._filetime = filetime
-
+        self._alphanumeric = self.calculate_alfanumeric()
         self.user_check = self.location_check = False
         self.basic = True if target else False
         self.reply_analysis = True if replies else False
@@ -103,7 +118,8 @@ class Group_Chat_Analisys:
         self.media_archive = True if media else False
         self.json_check = True if json else False
         self.translate_check = True if translate else False
-        self.last_date, self.chunk_size, self.user_language = None, 1000, 'en'
+        self.last_date, self.chunk_size, self.user_language = None, 1000, "en"
+        self.create_dirs_files()
 
     def telepathy_log_run(self):
         log = []
@@ -123,7 +139,7 @@ class Group_Chat_Analisys:
                 str(self._entity.scam),
                 self._date,
                 self._mtime,
-                self._group_status
+                self._group_status,
             ]
         )
         log_df = pd.DataFrame(
@@ -150,9 +166,14 @@ class Group_Chat_Analisys:
         if not os.path.isfile(self._log_file):
             log_df.to_csv(self._log_file, sep=";", index=False)
         else:
-            log_df.to_csv(
-                self._log_file, sep=";", mode="a", index=False, header=False
-            )
+            log_df.to_csv(self._log_file, sep=";", mode="a", index=False, header=False)
+
+    def calculate_alfanumeric(self):
+        alphanumeric = ""
+        for character in self._target:
+            if character.isalnum():
+                alphanumeric += character
+        return alphanumeric
 
     async def retrieve_entity(self, _target):
         current_entity = None
@@ -191,9 +212,7 @@ class Group_Chat_Analisys:
             members.append(populate_user(user, self._target))
 
         if members_df is not None:
-            with open(
-                    self.memberlist_filename, "w+", encoding="utf-8"
-            ) as save_members:
+            with open(self.memberlist_filename, "w+", encoding="utf-8") as save_members:
                 members_df.to_csv(save_members, sep=";")
 
             if self.json_check:
@@ -209,7 +228,7 @@ class Group_Chat_Analisys:
         found_percentage = 0
         if self._total_participants > 0:
             found_percentage = (
-                    int(found_participants) / int(self._total_participants) * 100
+                int(found_participants) / int(self._total_participants) * 100
             )
         print("\n")
         color_print_green(" [+] Memberlist fetched", "")
@@ -221,19 +240,26 @@ class Group_Chat_Analisys:
 
         _result["entity"] = await self.retrieve_entity(_handle)
 
-        if not _result["entity"] or (_result["entity"].__class__ == User and _check_user) :
+        if not _result["entity"] or (
+            _result["entity"].__class__ == User and _check_user
+        ):
             if _result["entity"].__class__ == User:
-                color_print_green(" [!] ", "You can't search for users using flag -c, run Telepathy using the flag -u.")
+                color_print_green(
+                    " [!] ",
+                    "You can't search for users using flag -c, run Telepathy using the flag -u.",
+                )
             else:
-                color_print_green(" [!] ", "Telegram handle: {} wasn't found. !!!!".format(_handle))
+                color_print_green(
+                    " [!] ", "Telegram handle: {} wasn't found. !!!!".format(_handle)
+                )
             return
-        elif _check_user :
+        elif _check_user:
             if _result["entity"].__class__ == User:
-                _result ={"chat_type":"User"}
+                _result = {"chat_type": "User"}
                 substring_1 = "PeerUser"
 
                 if _result["entity"].username is not None:
-                   _result["username"] = _result["entity"].username
+                    _result["username"] = _result["entity"].username
                 else:
                     username = "none"
 
@@ -244,19 +270,21 @@ class Group_Chat_Analisys:
                         "",
                         string_1,
                     )
-                    user_id = await self.client.get_entity(
-                        PeerUser(
-                            int(user_id)
-                        )
-                    )
+                    user_id = await self.client.get_entity(PeerUser(int(user_id)))
                     user_id = str(user_id)
                     _result["user_id"] = user_id
                     _result["first_name"] = _result["entity"].first_name
                     return _result
 
         _result["total_participants"] = 0
-        _result["chat_type"], _result["group_url"], _result["group_username"], _result["group_description"], \
-        _result["group_status"], _result["translated_description"] = "", "", "", "", "", ""
+        (
+            _result["chat_type"],
+            _result["group_url"],
+            _result["group_username"],
+            _result["group_description"],
+            _result["group_status"],
+            _result["translated_description"],
+        ) = ("", "", "", "", "", "")
 
         if _result["entity"].broadcast is True:
             _result["chat_type"] = "Channel"
@@ -276,7 +304,10 @@ class Group_Chat_Analisys:
             web_req = parse_html_page(_result["group_url"])
             _result["group_username"] = "Private group"
         else:
-            _result["group_url"], _result["group_username"] = "Private group", "Private group"
+            _result["group_url"], _result["group_username"] = (
+                "Private group",
+                "Private group",
+            )
 
         if web_req:
             _result["group_description"] = web_req["group_description"]
@@ -286,9 +317,7 @@ class Group_Chat_Analisys:
             _result["desc"] = process_description(
                 _result["group_description"], self.user_language
             )
-            _original_language = _result["desc"][
-                "original_language"
-            ]
+            _original_language = _result["desc"]["original_language"]
             _result["translated_description"] = _result["desc"]["translated_text"]
         else:
             _result["translated_description"] = "N/A"
@@ -310,9 +339,7 @@ class Group_Chat_Analisys:
             if 1 in _result["entity"].restriction_reason:
                 android_restriction = _result["entity"].restriction_reason[1]
                 _result["group_status"] = (
-                        str(ios_restriction)
-                        + ", "
-                        + str(android_restriction)
+                    str(ios_restriction) + ", " + str(android_restriction)
                 )
             else:
                 _result["group_status"] = str(ios_restriction)
@@ -320,14 +347,29 @@ class Group_Chat_Analisys:
             _result["group_status"] = "None"
         return _result
 
-    async def retrieve_chat_group_entity(self,_handle):
+    async def retrieve_chat_group_entity(self, _handle):
         try:
             _entitydetails = await self.retrieve_entity_info(_handle)
         except Exception as exx:
             pass
+
         self._entity = _entitydetails["entity"]
         self._total_participants = _entitydetails["total_participants"]
-        self._chat_type, self._group_url, self._group_username, self._group_description, self._group_status, self._translated_description = _entitydetails["chat_type"], _entitydetails["group_url"], _entitydetails["group_username"], _entitydetails["group_description"], _entitydetails["group_status"], _entitydetails["translated_description"]
+        (
+            self._chat_type,
+            self._group_url,
+            self._group_username,
+            self._group_description,
+            self._group_status,
+            self._translated_description,
+        ) = (
+            _entitydetails["chat_type"],
+            _entitydetails["group_url"],
+            _entitydetails["group_username"],
+            _entitydetails["group_description"],
+            _entitydetails["group_status"],
+            _entitydetails["translated_description"],
+        )
         self._first_post = _entitydetails["first_post"]
         self._date = _entitydetails["date"]
         self._datepost = _entitydetails["datepost"]
@@ -360,9 +402,7 @@ class Group_Chat_Analisys:
             self._desc = process_description(
                 self._group_description, self.user_language
             )
-            _original_language = self._desc[
-                "original_language"
-            ]
+            _original_language = self._desc["original_language"]
             self._translated_description = self._desc["translated_text"]
         else:
             self._translated_description = "N/A"
@@ -384,16 +424,14 @@ class Group_Chat_Analisys:
             if 1 in self._entity.restriction_reason:
                 android_restriction = self._entity.restriction_reason[1]
                 self._group_status = (
-                        str(ios_restriction)
-                        + ", "
-                        + str(android_restriction)
+                    str(ios_restriction) + ", " + str(android_restriction)
                 )
             else:
                 self._group_status = str(ios_restriction)
         else:
             self._group_status = "None"
 
-    def create_dirs_files(self, _alphanumeric):
+    def create_dirs_files(self):
         self.save_directory = None
         self.media_directory = None
         self.file_archive = None
@@ -406,42 +444,94 @@ class Group_Chat_Analisys:
         self.reply_memberlist_filename = None
 
         if self.basic or self.comp_check:
-            self.save_directory = create_path( os.path.join(telepathy_file,self._alphanumeric))
+            self.save_directory = create_path(
+                os.path.join(telepathy_file, self._alphanumeric)
+            )
 
         if self.media_archive and self.save_directory:
-            self.media_directory = create_path( os.path.join(self.save_directory,"media"))
+            self.media_directory = create_path(
+                os.path.join(self.save_directory, "media")
+            )
 
         if self.comp_check:
-            self.file_archive = create_file_report(self.save_directory, _alphanumeric, "archive", "csv", self._filetime)
-            self.reply_file_archive = create_file_report(self.save_directory, _alphanumeric, "reply_archive", "csv", self._filetime)
+            self.file_archive = create_file_report(
+                self.save_directory, self._alphanumeric, "archive", "csv", self._filetime
+            )
+            self.reply_file_archive = create_file_report(
+                self.save_directory,
+                self._alphanumeric,
+                "reply_archive",
+                "csv",
+                self._filetime,
+            )
             if self.json_check:
-                self.archive_filename_json = create_file_report(self.memberlist_directory, _alphanumeric, "archive",
-                                                              "json", self._filetime, False)
+                self.archive_filename_json = create_file_report(
+                    self.memberlist_directory,
+                    self._alphanumeric,
+                    "archive",
+                    "json",
+                    self._filetime,
+                    False,
+                )
 
         if self.forwards_check == True:
-            self.forward_directory = create_path(os.path.join(self.save_directory, "edgelist"))
-            self.file_forwards = create_file_report(self.forward_directory, _alphanumeric, "edgelist", "csv", self._filetime)
-            self.edgelist_file = create_file_report(self.forward_directory, _alphanumeric, "edgelist", "csv", self._filetime, False)
+            self.forward_directory = create_path(
+                os.path.join(self.save_directory, "edgelist")
+            )
+            self.file_forwards = create_file_report(
+                self.forward_directory, self._alphanumeric, "edgelist", "csv", self._filetime
+            )
+            self.edgelist_file = create_file_report(
+                self.forward_directory,
+                self._alphanumeric,
+                "edgelist",
+                "csv",
+                self._filetime,
+                False,
+            )
             if self.json_check:
-                self.edgelist_filename_json = create_file_report(self.memberlist_directory, _alphanumeric, "edgelist",
-                                                              "json", self._filetime,False)
+                self.edgelist_filename_json = create_file_report(
+                    self.memberlist_directory,
+                    self._alphanumeric,
+                    "edgelist",
+                    "json",
+                    self._filetime,
+                    False,
+                )
 
         if self.basic is True or self.comp_check is True:
-            self.memberlist_directory = create_path(os.path.join(self.save_directory, "memeberlist"))
-            self.memberlist_filename = create_file_report(self.memberlist_directory, _alphanumeric, "members", "csv", self._filetime)
+            self.memberlist_directory = create_path(
+                os.path.join(self.save_directory, "memeberlist")
+            )
+            self.memberlist_filename = create_file_report(
+                self.memberlist_directory,
+                self._alphanumeric,
+                "members",
+                "csv",
+                self._filetime,
+            )
             if self.json_check:
-                self.memberlist_filename_json = create_file_report(self.memberlist_directory, _alphanumeric, "members",
-                                                              "json", self._filetime, False)
-            self.reply_memberlist_filename = create_file_report(self.memberlist_directory, _alphanumeric, "active_members", "csv", self._filetime)
+                self.memberlist_filename_json = create_file_report(
+                    self.memberlist_directory,
+                    self._alphanumeric,
+                    "members",
+                    "json",
+                    self._filetime,
+                    False,
+                )
+            self.reply_memberlist_filename = create_file_report(
+                self.memberlist_directory,
+                self._alphanumeric,
+                "active_members",
+                "csv",
+                self._filetime,
+            )
 
-    async def analyze_group_channel(self,_target):
-        alphanumeric = ""
-        save_directory = None
-        for character in _target:
-            if character.isalnum():
-                alphanumeric += character
-
+    async def analyze_group_channel(self, _target=None):
+        if not _target:
+            _target = self._target
         _target = clean_private_invite(_target)
+        await self.retrieve_chat_group_entity(_target)
 
         if self.basic and not self.comp_check:
             color_print_green(" [!] ", "Performing basic scan")
@@ -452,7 +542,10 @@ class Group_Chat_Analisys:
 
         if self.basic is True or self.comp_check is True:
             if self._chat_type != "Channel":
-                self._found_participants, self._found_percentage = await self.retrieve_memberlist()
+                (
+                    self._found_participants,
+                    self._found_percentage,
+                ) = await self.retrieve_memberlist()
 
             setattr(self._entity, "group_description", self._group_description)
             setattr(self._entity, "group_status", self._group_status)
@@ -460,7 +553,9 @@ class Group_Chat_Analisys:
             setattr(self._entity, "first_post", self._first_post)
             setattr(self._entity, "group_url", self._group_url)
             setattr(self._entity, "chat_type", self._chat_type)
-            setattr(self._entity, "translated_description", self._translated_description)
+            setattr(
+                self._entity, "translated_description", self._translated_description
+            )
             setattr(self._entity, "total_participants", self._total_participants)
 
             if self._chat_type != "Channel":
@@ -475,8 +570,10 @@ class Group_Chat_Analisys:
                 print_flag = "channel_recap"
             print_shell(print_flag, self._entity)
             self.telepathy_log_run()
+            await self.process_group_channel_messages(_target)
 
     async def f_export(self):
+
         exports = []
         for Dialog in await self.client.get_dialogs():
             try:
@@ -508,17 +605,11 @@ class Group_Chat_Analisys:
                         self.target_type = "g"
 
                     if Dialog.entity.restriction_reason is not None:
-                        ios_restriction = Dialog.entity.restriction_reason[
-                            0
-                        ]
+                        ios_restriction = Dialog.entity.restriction_reason[0]
                         if 1 in Dialog.entity.restriction_reason:
-                            android_restriction = (
-                                Dialog.entity.restriction_reason[1]
-                            )
+                            android_restriction = Dialog.entity.restriction_reason[1]
                             self._group_status = (
-                                    str(ios_restriction)
-                                    + ", "
-                                    + str(android_restriction)
+                                str(ios_restriction) + ", " + str(android_restriction)
                             )
                         else:
                             self._group_status = str(ios_restriction)
@@ -596,9 +687,7 @@ class Group_Chat_Analisys:
 
     async def process_group_channel_messages(self, _target):
         if self.forwards_check is True and self.comp_check is False:
-            color_print_green(
-                " [-] ", "Calculating number of forwarded messages..."
-            )
+            color_print_green(" [-] ", "Calculating number of forwarded messages...")
             forwards_list = []
             forward_count = 0
             private_count = 0
@@ -622,12 +711,10 @@ class Group_Chat_Analisys:
                     forward_count += 1
 
             color_print_green(" [-] ", "Fetching forwarded messages...")
-            progress_bar = (
-                    Fore.GREEN + " [-] " + Style.RESET_ALL + "Progress: "
-            )
+            progress_bar = Fore.GREEN + " [-] " + Style.RESET_ALL + "Progress: "
 
             with alive_bar(
-                    forward_count, dual_line=True, title=progress_bar, length=20
+                forward_count, dual_line=True, title=progress_bar, length=20
             ) as bar:
 
                 async for message in self.client.iter_messages(_target):
@@ -637,13 +724,11 @@ class Group_Chat_Analisys:
                             if f_from_id is not None:
                                 ent = await self.client.get_entity(f_from_id)
                                 username = ent.username
-                                timestamp = parse_tg_date(message.date)[
-                                    "timestamp"
-                                ]
+                                timestamp = parse_tg_date(message.date)["timestamp"]
 
                                 substring = "PeerUser"
                                 string = str(f_from_id)
-                                if self.chat_type != "Channel":
+                                if self._chat_type != "Channel":
                                     if substring in string:
                                         user_id = re.sub("[^0-9]", "", string)
                                         user_id = await self.client.get_entity(
@@ -651,10 +736,10 @@ class Group_Chat_Analisys:
                                         )
                                         user_id = str(user_id)
                                         result = (
-                                                "User: "
-                                                + str(ent.first_name)
-                                                + " / ID: "
-                                                + str(user_id.id)
+                                            "User: "
+                                            + str(ent.first_name)
+                                            + " / ID: "
+                                            + str(user_id.id)
                                         )
                                     else:
                                         result = str(ent.title)
@@ -693,7 +778,7 @@ class Group_Chat_Analisys:
                         bar()
 
                         with open(
-                                self.edgelist_file, "w+", encoding="utf-8"
+                            self.edgelist_file, "w+", encoding="utf-8"
                         ) as save_forwards:
                             forwards_df.to_csv(save_forwards, sep=";")
 
@@ -715,34 +800,34 @@ class Group_Chat_Analisys:
 
                 report_forward = createPlaceholdeCls()
                 report_forward.forward_one = (
-                        str(df01.iloc[0]["unique_values"])
-                        + ", "
-                        + str(df01.iloc[0]["counts"])
-                        + " forwarded messages"
+                    str(df01.iloc[0]["unique_values"])
+                    + ", "
+                    + str(df01.iloc[0]["counts"])
+                    + " forwarded messages"
                 )
                 report_forward.forward_two = (
-                        str(df01.iloc[1]["unique_values"])
-                        + ", "
-                        + str(df01.iloc[1]["counts"])
-                        + " forwarded messages"
+                    str(df01.iloc[1]["unique_values"])
+                    + ", "
+                    + str(df01.iloc[1]["counts"])
+                    + " forwarded messages"
                 )
                 report_forward.forward_three = (
-                        str(df01.iloc[2]["unique_values"])
-                        + ", "
-                        + str(df01.iloc[2]["counts"])
-                        + " forwarded messages"
+                    str(df01.iloc[2]["unique_values"])
+                    + ", "
+                    + str(df01.iloc[2]["counts"])
+                    + " forwarded messages"
                 )
                 report_forward.forward_four = (
-                        str(df01.iloc[3]["unique_values"])
-                        + ", "
-                        + str(df01.iloc[3]["counts"])
-                        + " forwarded messages"
+                    str(df01.iloc[3]["unique_values"])
+                    + ", "
+                    + str(df01.iloc[3]["counts"])
+                    + " forwarded messages"
                 )
                 report_forward.forward_five = (
-                        str(df01.iloc[4]["unique_values"])
-                        + ", "
-                        + str(df01.iloc[4]["counts"])
-                        + " forwarded messages"
+                    str(df01.iloc[4]["unique_values"])
+                    + ", "
+                    + str(df01.iloc[4]["counts"])
+                    + " forwarded messages"
                 )
 
                 df02 = forwards_df.Source.unique()
@@ -772,13 +857,9 @@ class Group_Chat_Analisys:
 
                 if self.media_archive is True:
                     print("\n")
-                    color_print_green(
-                        " [!] ", "Media content will be archived"
-                    )
+                    color_print_green(" [!] ", "Media content will be archived")
 
-                color_print_green(
-                    " [!] ", "Calculating number of messages..."
-                )
+                color_print_green(" [!] ", "Calculating number of messages...")
 
                 async for message in messages:
                     if message is not None:
@@ -786,22 +867,18 @@ class Group_Chat_Analisys:
 
                 print("\n")
                 color_print_green(" [-] ", "Fetching message archive...")
-                progress_bar = (
-                        Fore.GREEN + " [-] " + Style.RESET_ALL + "Progress: "
-                )
+                progress_bar = Fore.GREEN + " [-] " + Style.RESET_ALL + "Progress: "
 
                 with alive_bar(
-                        message_count,
-                        dual_line=True,
-                        title=progress_bar,
-                        length=20,
+                    message_count,
+                    dual_line=True,
+                    title=progress_bar,
+                    length=20,
                 ) as bar:
 
                     to_ent = self._entity
 
-                    async for message in self.client.iter_messages(
-                            _target, limit=None
-                    ):
+                    async for message in self.client.iter_messages(_target, limit=None):
                         if message is not None:
                             try:
                                 c_archive = pd.DataFrame(
@@ -847,7 +924,7 @@ class Group_Chat_Analisys:
                                         "Pray",
                                         "Edit_date",
                                         "URL",
-                                        "Media save directory"
+                                        "Media save directory",
                                     ],
                                 )
 
@@ -877,9 +954,9 @@ class Group_Chat_Analisys:
                                 #        )
 
                                 if (
-                                        message.replies
-                                        and self.reply_analysis
-                                        and self._chat_type == "Channel"
+                                    message.replies
+                                    and self.reply_analysis
+                                    and self._chat_type == "Channel"
                                 ):
                                     if message.replies.replies > 0:
                                         c_repliers = pd.DataFrame(
@@ -912,8 +989,8 @@ class Group_Chat_Analisys:
                                 if message.replies:
                                     if message.replies.replies > 0:
                                         async for repl in self.client.iter_messages(
-                                                message.chat_id,
-                                                reply_to=message.id,
+                                            message.chat_id,
+                                            reply_to=message.id,
                                         ):
 
                                             user = await self.client.get_entity(
@@ -921,17 +998,21 @@ class Group_Chat_Analisys:
                                             )
 
                                             userdet = populate_user(user, _target)
-                                            user_replier_list.append(
-                                                userdet
-                                            )
+                                            user_replier_list.append(userdet)
 
                                             if self.translate_check:
                                                 mss_txt = process_message(
                                                     repl.text, self.user_language
                                                 )
-                                                original_language = mss_txt["original_language"],
-                                                translated_text = mss_txt["translated_text"],
-                                                translation_confidence = mss_txt["translation_confidence"],
+                                                original_language = (
+                                                    mss_txt["original_language"],
+                                                )
+                                                translated_text = (
+                                                    mss_txt["translated_text"],
+                                                )
+                                                translation_confidence = (
+                                                    mss_txt["translation_confidence"],
+                                                )
                                                 reply_text = mss_txt["message_text"]
                                             else:
                                                 original_language = "N/A"
@@ -950,31 +1031,25 @@ class Group_Chat_Analisys:
                                                     original_language,
                                                     translated_text,
                                                     translation_confidence,
-                                                    parse_tg_date(
-                                                        repl.date
-                                                    )["timestamp"],
+                                                    parse_tg_date(repl.date)[
+                                                        "timestamp"
+                                                    ],
                                                 ]
                                             )
 
-                                display_name = get_display_name(
-                                    message.sender
-                                )
+                                display_name = get_display_name(message.sender)
                                 if self._chat_type != "Channel":
                                     substring = "PeerUser"
                                     string = str(message.from_id)
                                     if substring in string:
-                                        user_id = re.sub(
-                                            "[^0-9]", "", string
-                                        )
+                                        user_id = re.sub("[^0-9]", "", string)
                                         nameID = str(user_id)
                                     else:
                                         nameID = str(message.from_id)
                                 else:
                                     nameID = to_ent.id
 
-                                timestamp = parse_tg_date(message.date)[
-                                    "timestamp"
-                                ]
+                                timestamp = parse_tg_date(message.date)["timestamp"]
                                 reply = message.reply_to_msg_id
 
                                 if self.translate_check:
@@ -982,9 +1057,7 @@ class Group_Chat_Analisys:
                                         message.text, self.user_language
                                     )
                                     message_text = _mess["message_text"]
-                                    original_language = _mess[
-                                        "original_language"
-                                    ]
+                                    original_language = _mess["original_language"]
                                     translated_text = _mess["translated_text"]
                                     translation_confidence = _mess[
                                         "translation_confidence"
@@ -1003,10 +1076,13 @@ class Group_Chat_Analisys:
                                 if message.views is not None:
                                     views = int(message.views)
                                 else:
-                                    views = 'N/A'
+                                    views = "N/A"
 
                                 if message.reactions:
-                                    total_reactions, reaction_detail = evaluate_reactions(message)
+                                    (
+                                        total_reactions,
+                                        reaction_detail,
+                                    ) = evaluate_reactions(message)
 
                                 if self.media_archive:
                                     if message.media is not None:
@@ -1035,41 +1111,64 @@ class Group_Chat_Analisys:
                                 else:
                                     edit_date = "None"
 
-                                '''Need to find a way to calculate these in case these figures don't exist to make it
+                                """Need to find a way to calculate these in case these figures don't exist to make it
                                 comparable across channels for a total engagement number (e.g. if replies/reactions are off). 
-                                If not N/A would cover if it's off, zero if it's none. Working on some better logic here.'''
+                                If not N/A would cover if it's off, zero if it's none. Working on some better logic here."""
 
-                                if reply_count != 'N/A' and self._total_participants is not None:
-                                    reply_reach_ER = (reply_count / int(self._total_participants)) * 100
+                                if (
+                                    reply_count != "N/A"
+                                    and self._total_participants is not None
+                                ):
+                                    reply_reach_ER = (
+                                        reply_count / int(self._total_participants)
+                                    ) * 100
                                 else:
-                                    reply_reach_ER = 'N/A'
+                                    reply_reach_ER = "N/A"
 
-                                if reply_count != 'N/A' and views != 'N/A':
-                                    reply_impressions_ER = (reply_count / int(views)) * 100
+                                if reply_count != "N/A" and views != "N/A":
+                                    reply_impressions_ER = (
+                                        reply_count / int(views)
+                                    ) * 100
                                 else:
-                                    reply_impressions_ER = 'N/A'
+                                    reply_impressions_ER = "N/A"
 
-                                if forwards != 'N/A' and self._total_participants is not None:
-                                    forwards_reach_ER = (forwards / int(self._total_participants)) * 100
+                                if (
+                                    forwards != "N/A"
+                                    and self._total_participants is not None
+                                ):
+                                    forwards_reach_ER = (
+                                        forwards / int(self._total_participants)
+                                    ) * 100
                                 else:
-                                    forwards_reach_ER = 'N/A'
+                                    forwards_reach_ER = "N/A"
 
-                                if forwards != 'N/A' and views != 'N/A':
-                                    forwards_impressions_ER = (forwards / int(views)) * 100
+                                if forwards != "N/A" and views != "N/A":
+                                    forwards_impressions_ER = (
+                                        forwards / int(views)
+                                    ) * 100
                                 else:
-                                    forwards_impressions_ER = 'N/A'
+                                    forwards_impressions_ER = "N/A"
 
-                                if total_reactions != 'N/A' and self._total_participants is not None:
-                                    reactions_reach_ER = (total_reactions / int(self._total_participants)) * 100
+                                if (
+                                    total_reactions != "N/A"
+                                    and self._total_participants is not None
+                                ):
+                                    reactions_reach_ER = (
+                                        total_reactions / int(self._total_participants)
+                                    ) * 100
                                 else:
-                                    reactions_reach_ER = 'N/A'
+                                    reactions_reach_ER = "N/A"
 
-                                if total_reactions != 'N/A' and views != 'N/A':
-                                    reactions_impressions_ER = (total_reactions / int(views)) * 100
+                                if total_reactions != "N/A" and views != "N/A":
+                                    reactions_impressions_ER = (
+                                        total_reactions / int(views)
+                                    ) * 100
                                 else:
-                                    reactions_impressions_ER = 'N/A'
+                                    reactions_impressions_ER = "N/A"
 
-                                post_url = "https://t.me/s/" + _target + "/" + str(message.id)
+                                post_url = (
+                                    "https://t.me/s/" + _target + "/" + str(message.id)
+                                )
 
                                 message_list.append(
                                     [
@@ -1121,18 +1220,27 @@ class Group_Chat_Analisys:
                                     try:
                                         forward_count += 1
                                         to_title = to_ent.title
-                                        f_from_id = (
-                                            message.forward.original_fwd.from_id
-                                        )
+                                        f_from_id = message.forward.original_fwd.from_id
 
                                         if f_from_id is not None:
-                                            ent_info = await self.retrieve_entity_info(f_from_id,True)
+                                            ent_info = await self.retrieve_entity_info(
+                                                f_from_id, True
+                                            )
                                             result = ""
                                             username = ent_info["entityt"].username
                                             if ent_info:
                                                 if ent_info["chat_type"] == "User":
-                                                    result = "User: {} / ID: {} ".format(ent_info[""],ent_info[""])
-                                                elif ent_info["chat_type"] == "Megagroup" or ent_info["chat_type"] == "Gigagroup" or ent_info["chat_type"] == "Chat":
+                                                    result = (
+                                                        "User: {} / ID: {} ".format(
+                                                            ent_info[""], ent_info[""]
+                                                        )
+                                                    )
+                                                elif (
+                                                    ent_info["chat_type"] == "Megagroup"
+                                                    or ent_info["chat_type"]
+                                                    == "Gigagroup"
+                                                    or ent_info["chat_type"] == "Chat"
+                                                ):
                                                     result = ent_info["entity"].title
                                                 elif ent_info["chat_type"] == "Channel":
                                                     result = ent_info["entity"].title
@@ -1212,19 +1320,17 @@ class Group_Chat_Analisys:
                 if self.reply_analysis is True:
                     if len(replies_list) > 0:
                         with open(
-                                self.reply_file_archive, "w+", encoding="utf-8"
+                            self.reply_file_archive, "w+", encoding="utf-8"
                         ) as rep_file:
                             c_replies.to_csv(rep_file, sep=";")
 
                     if len(user_replier_list) > 0:
                         with open(
-                                self.reply_memberlist_filename, "w+", encoding="utf-8"
+                            self.reply_memberlist_filename, "w+", encoding="utf-8"
                         ) as repliers_file:
                             c_repliers.to_csv(repliers_file, sep=";")
 
-                with open(
-                        self.file_archive, "w+", encoding="utf-8"
-                ) as archive_file:
+                with open(self.file_archive, "w+", encoding="utf-8") as archive_file:
                     c_archive.to_csv(archive_file, sep=";")
 
                 if self.json_check:
@@ -1238,7 +1344,7 @@ class Group_Chat_Analisys:
 
                 if self.forwards_check:
                     with open(
-                            self.file_forwards, "w+", encoding="utf-8"
+                        self.file_forwards, "w+", encoding="utf-8"
                     ) as forwards_file:
                         c_forwards.to_csv(forwards_file, sep=";")
 
@@ -1260,48 +1366,48 @@ class Group_Chat_Analisys:
                     print_shell("channel_stat", report_obj)
                 else:
                     pvalue_count = c_archive["Display_name"].value_counts()
-                    df03 = pvalue_count.rename_axis(
-                        "unique_values"
-                    ).reset_index(name="counts")
+                    df03 = pvalue_count.rename_axis("unique_values").reset_index(
+                        name="counts"
+                    )
 
-                    '''
+                    """
                     message_frequency_count = {}
                     message_text = {}
                     word_count = {}
                     most_used_words = {}
                     most_used_words_filtered = {}
-                    '''
+                    """
                     # message stats, top words
 
                     report_obj.poster_one = (
-                            str(df03.iloc[0]["unique_values"])
-                            + ", "
-                            + str(df03.iloc[0]["counts"])
-                            + " messages"
+                        str(df03.iloc[0]["unique_values"])
+                        + ", "
+                        + str(df03.iloc[0]["counts"])
+                        + " messages"
                     )
                     report_obj.poster_two = (
-                            str(df03.iloc[1]["unique_values"])
-                            + ", "
-                            + str(df03.iloc[1]["counts"])
-                            + " messages"
+                        str(df03.iloc[1]["unique_values"])
+                        + ", "
+                        + str(df03.iloc[1]["counts"])
+                        + " messages"
                     )
                     report_obj.poster_three = (
-                            str(df03.iloc[2]["unique_values"])
-                            + ", "
-                            + str(df03.iloc[2]["counts"])
-                            + " messages"
+                        str(df03.iloc[2]["unique_values"])
+                        + ", "
+                        + str(df03.iloc[2]["counts"])
+                        + " messages"
                     )
                     report_obj.poster_four = (
-                            str(df03.iloc[3]["unique_values"])
-                            + ", "
-                            + str(df03.iloc[3]["counts"])
-                            + " messages"
+                        str(df03.iloc[3]["unique_values"])
+                        + ", "
+                        + str(df03.iloc[3]["counts"])
+                        + " messages"
                     )
                     report_obj.poster_five = (
-                            str(df03.iloc[4]["unique_values"])
-                            + ", "
-                            + str(df03.iloc[4]["counts"])
-                            + " messages"
+                        str(df03.iloc[4]["unique_values"])
+                        + ", "
+                        + str(df03.iloc[4]["counts"])
+                        + " messages"
                     )
 
                     df04 = c_archive.Display_name.unique()
@@ -1318,41 +1424,43 @@ class Group_Chat_Analisys:
 
                         repliers = createPlaceholdeCls()
                         repliers.replier_one = (
-                                str(replier_df.iloc[0]["unique_values"])
-                                + ", "
-                                + str(replier_df.iloc[0]["counts"])
-                                + " replies"
+                            str(replier_df.iloc[0]["unique_values"])
+                            + ", "
+                            + str(replier_df.iloc[0]["counts"])
+                            + " replies"
                         )
                         repliers.replier_two = (
-                                str(replier_df.iloc[1]["unique_values"])
-                                + ", "
-                                + str(replier_df.iloc[1]["counts"])
-                                + " replies"
+                            str(replier_df.iloc[1]["unique_values"])
+                            + ", "
+                            + str(replier_df.iloc[1]["counts"])
+                            + " replies"
                         )
                         repliers.replier_three = (
-                                str(replier_df.iloc[2]["unique_values"])
-                                + ", "
-                                + str(replier_df.iloc[2]["counts"])
-                                + " replies"
+                            str(replier_df.iloc[2]["unique_values"])
+                            + ", "
+                            + str(replier_df.iloc[2]["counts"])
+                            + " replies"
                         )
                         repliers.replier_four = (
-                                str(replier_df.iloc[3]["unique_values"])
-                                + ", "
-                                + str(replier_df.iloc[3]["counts"])
-                                + " replies"
+                            str(replier_df.iloc[3]["unique_values"])
+                            + ", "
+                            + str(replier_df.iloc[3]["counts"])
+                            + " replies"
                         )
                         repliers.replier_five = (
-                                str(replier_df.iloc[4]["unique_values"])
-                                + ", "
-                                + str(replier_df.iloc[4]["counts"])
-                                + " replies"
+                            str(replier_df.iloc[4]["unique_values"])
+                            + ", "
+                            + str(replier_df.iloc[4]["counts"])
+                            + " replies"
                         )
 
                         replier_count_df = c_repliers["User ID"].unique()
                         replier_unique = len(replier_count_df)
                         repliers.user_replier_list_len = len(user_replier_list)
                         repliers.reply_file_archive = str(self.reply_file_archive)
-                        repliers.reply_memberlist_filename = str(self.reply_memberlist_filename)
+                        repliers.reply_memberlist_filename = str(
+                            self.reply_memberlist_filename
+                        )
                         repliers.replier_unique = str(replier_unique)
                         print_shell("reply_stat", repliers)
 
@@ -1366,34 +1474,34 @@ class Group_Chat_Analisys:
 
                         report_forward = createPlaceholdeCls()
                         report_forward.forward_one = (
-                                str(c_f_stats.iloc[0]["unique_values"])
-                                + ", "
-                                + str(c_f_stats.iloc[0]["counts"])
-                                + " forwarded messages"
+                            str(c_f_stats.iloc[0]["unique_values"])
+                            + ", "
+                            + str(c_f_stats.iloc[0]["counts"])
+                            + " forwarded messages"
                         )
                         report_forward.forward_two = (
-                                str(c_f_stats.iloc[1]["unique_values"])
-                                + ", "
-                                + str(c_f_stats.iloc[1]["counts"])
-                                + " forwarded messages"
+                            str(c_f_stats.iloc[1]["unique_values"])
+                            + ", "
+                            + str(c_f_stats.iloc[1]["counts"])
+                            + " forwarded messages"
                         )
                         report_forward.forward_three = (
-                                str(c_f_stats.iloc[2]["unique_values"])
-                                + ", "
-                                + str(c_f_stats.iloc[2]["counts"])
-                                + " forwarded messages"
+                            str(c_f_stats.iloc[2]["unique_values"])
+                            + ", "
+                            + str(c_f_stats.iloc[2]["counts"])
+                            + " forwarded messages"
                         )
                         report_forward.forward_four = (
-                                str(c_f_stats.iloc[3]["unique_values"])
-                                + ", "
-                                + str(c_f_stats.iloc[3]["counts"])
-                                + " forwarded messages"
+                            str(c_f_stats.iloc[3]["unique_values"])
+                            + ", "
+                            + str(c_f_stats.iloc[3]["counts"])
+                            + " forwarded messages"
                         )
                         report_forward.forward_five = (
-                                str(c_f_stats.iloc[4]["unique_values"])
-                                + ", "
-                                + str(c_f_stats.iloc[4]["counts"])
-                                + " forwarded messages"
+                            str(c_f_stats.iloc[4]["unique_values"])
+                            + ", "
+                            + str(c_f_stats.iloc[4]["counts"])
+                            + " forwarded messages"
                         )
 
                         c_f_unique = c_forwards.Source.unique()
@@ -1406,7 +1514,7 @@ class Group_Chat_Analisys:
                     else:
                         color_print_green(
                             " [!] Insufficient forwarded messages found",
-                           self.edgelist_file,
+                            self.edgelist_file,
                         )
 
 
@@ -1415,22 +1523,25 @@ class Telepathy_cli:
     alt = None
     target_type = None
 
-    def __init__(self,target,
-    comprehensive,
-    media,
-    forwards,
-    user,
-    bot,
-    location,
-    alt,
-    json,
-    export,
-    replies,
-    translate,
-    triangulate_membership):
+    def __init__(
+        self,
+        target,
+        comprehensive,
+        media,
+        forwards,
+        user,
+        bot,
+        location,
+        alt,
+        json,
+        export,
+        replies,
+        translate,
+        triangulate_membership,
+    ):
 
         self.config_p = configparser.ConfigParser()
-        self.config_p.read(os.path.join("config","config.ini"))
+        self.config_p.read(os.path.join("config", "config.ini"))
         # Defining default values
         self.user_check = self.location_check = False
         self.basic = True if target else False
@@ -1440,7 +1551,7 @@ class Telepathy_cli:
         self.media_archive = True if media else False
         self.json_check = True if json else False
         self.translate_check = True if translate else False
-        self.last_date, self.chunk_size, self.user_language = None, 1000, 'en'
+        self.last_date, self.chunk_size, self.user_language = None, 1000, "en"
         self.bot = bot is not None
         self.alt = alt
 
@@ -1448,11 +1559,14 @@ class Telepathy_cli:
         self.filetime_clean = str(self.filetime)
 
         if bot:
-            if  ":" in bot:
+            if ":" in bot:
                 self.bot_id = bot.split(":")[0]
                 self.hash = bot.split(":")[1]
             else:
-                color_print_green(" [!] ", "The bot_id/bot_hash isn't valid. Pls insert a valid api_id//api_hash")
+                color_print_green(
+                    " [!] ",
+                    "The bot_id/bot_hash isn't valid. Pls insert a valid api_id//api_hash",
+                )
         if user:
             self.user_check, self.basic = True, False
         if location:
@@ -1463,10 +1577,18 @@ class Telepathy_cli:
 
         self.triangulate = True if triangulate_membership else False
         self.telepathy_file = self.config_p["telepathy"]["telepathy_files"]
-        self.json_file = os.path.join(self.telepathy_file, self.config_p["telepathy"]["json_file"])
-        self.login = os.path.join(self.telepathy_file, self.config_p["telepathy"]["login"])
-        self.log_file = os.path.join(self.telepathy_file, self.config_p["telepathy"]["log_file"])
-        self.export_file = os.path.join(self.telepathy_file,self.config_p["telepathy"]["export_file"])
+        self.json_file = os.path.join(
+            self.telepathy_file, self.config_p["telepathy"]["json_file"]
+        )
+        self.login = os.path.join(
+            self.telepathy_file, self.config_p["telepathy"]["login"]
+        )
+        self.log_file = os.path.join(
+            self.telepathy_file, self.config_p["telepathy"]["log_file"]
+        )
+        self.export_file = os.path.join(
+            self.telepathy_file, self.config_p["telepathy"]["export_file"]
+        )
         self.create_path(self.telepathy_file)
         self.target = target
         self.create_tg_client()
@@ -1487,7 +1609,7 @@ class Telepathy_cli:
     @staticmethod
     def clean_private_invite(url):
         if "https://t.me/+" in url:
-            return(url.replace('https://t.me/+', 'https://t.me/joinchat/'))
+            return url.replace("https://t.me/+", "https://t.me/joinchat/")
 
     def retrieve_alt(self):
         with open(self.login, encoding="utf-8") as file:
@@ -1501,16 +1623,19 @@ class Telepathy_cli:
             except:
                 _api_id, _api_hash, _phone_number = self.login_function()
                 with open(self.login, "a+", encoding="utf-8") as file_io:
-                    file_io.write(_api_id + "," + _api_hash + "," + _phone_number + "\n")
+                    file_io.write(
+                        _api_id + "," + _api_hash + "," + _phone_number + "\n"
+                    )
             return _api_id, _api_hash, _phone_number
+
     def create_tg_client(self):
         if os.path.isfile(self.login) == False:
             api_id, api_hash, phone_number = self.login_function()
             with open(self.login, "w+", encoding="utf-8") as f:
                 f.write(api_id + "," + api_hash + "," + phone_number + "\n")
         else:
-             self.api_id, self.api_hash, self.phone_number = self.retrieve_alt()
-        '''End of API details'''
+            self.api_id, self.api_hash, self.phone_number = self.retrieve_alt()
+        """End of API details"""
         self.client = TelegramClient(self.phone_number, self.api_id, self.api_hash)
 
     async def connect_tg_client_and_run(self):
@@ -1539,6 +1664,7 @@ class Telepathy_cli:
                 )
             )
         await self.start_process()
+
     async def start_process(self):
         if self.location_check:
             for _t in self.target:
@@ -1549,13 +1675,35 @@ class Telepathy_cli:
         else:
             for _t in self.target:
                 if self.export:
-                    print("message export")
-                    ###TODO
+                    group_channel = Group_Chat_Analisys(
+                        _t,
+                        self.client,
+                        self.log_file,
+                        self.filetime,
+                        self.reply_analysis,
+                        self.forwards_check,
+                        self.comp_check,
+                        self.media_archive,
+                        self.json_check,
+                        self.translate_check,
+                    )
+                    await group_channel.f_export()
                 else:
-                    print("message process")
-                    ###TODO
+                    group_channel = Group_Chat_Analisys(
+                        _t,
+                        self.client,
+                        self.log_file,
+                        self.filetime,
+                        self.reply_analysis,
+                        self.forwards_check,
+                        self.comp_check,
+                        self.media_archive,
+                        self.json_check,
+                        self.translate_check,
+                    )
+                    await group_channel.analyze_group_channel()
 
-    async def analyze_location(self,_target):
+    async def analyze_location(self, _target):
         print(
             Fore.GREEN
             + " [!] "
@@ -1567,16 +1715,18 @@ class Telepathy_cli:
 
         latitude, longitude = _target.split(sep=",")
 
-        locations_file = self.create_path(os.path.join(self.telepathy_file,self.config_p["telepathy"]["location"]))
+        locations_file = self.create_path(
+            os.path.join(self.telepathy_file, self.config_p["telepathy"]["location"])
+        )
         save_file = (
-                locations_file
-                + latitude
-                + "_"
-                + longitude
-                + "_"
-                + "locations_"
-                + self.filetime_clean
-                + ".csv"
+            locations_file
+            + latitude
+            + "_"
+            + longitude
+            + "_"
+            + "locations_"
+            + self.filetime_clean
+            + ".csv"
         )
 
         locations_list = []
@@ -1593,20 +1743,11 @@ class Telepathy_cli:
             )
         )
 
-        user_df = pd.DataFrame(
-            locations_list, columns=[
-                "User_ID",
-                "Distance"]
-        )
+        user_df = pd.DataFrame(locations_list, columns=["User_ID", "Distance"])
 
         l_save_df = pd.DataFrame(
-            l_save_list, columns=[
-                "User_ID",
-                "Distance",
-                "Latitude",
-                "Longitude",
-                "Date_retrieved"
-            ]
+            l_save_list,
+            columns=["User_ID", "Distance", "Latitude", "Longitude", "Date_retrieved"],
         )
 
         for user in result.updates[0].peers:
@@ -1620,15 +1761,7 @@ class Telepathy_cli:
                     distance = user.distance
 
                 locations_list.append([ID, distance])
-                l_save_list.append(
-                    [
-                        ID,
-                        distance,
-                        latitude,
-                        longitude,
-                        self.filetime
-                    ]
-                )
+                l_save_list.append([ID, distance, latitude, longitude, self.filetime])
             except:
                 pass
 
@@ -1665,7 +1798,11 @@ class Telepathy_cli:
             _bot_id = self.bot.split(":")[0]
             _bot_hash = self.bot.split(":")[1]
         else:
-            color_print_green(" [!] ", "The bot_id/bot_hash isn't valid. Pls insert a valid api_id//api_hash")
+            color_print_green(
+                " [!] ",
+                "The bot_id/bot_hash isn't valid. Pls insert a valid api_id//api_hash",
+            )
+
     async def analyze_user(self, _target):
         my_user = None
         self.target_type = "u"
@@ -1679,11 +1816,7 @@ class Telepathy_cli:
             user_first_name = my_user.first_name
             user_last_name = my_user.last_name
             if user_last_name is not None:
-                user_full_name = (
-                        str(user_first_name)
-                        + " "
-                        + str(user_last_name)
-                )
+                user_full_name = str(user_first_name) + " " + str(user_last_name)
             else:
                 user_full_name = str(user_first_name)
 
@@ -1714,9 +1847,7 @@ class Telepathy_cli:
                 if 1 in my_user.restriction_reason:
                     android_restriction = my_user.restriction_reason[1]
                     user_restrictions = (
-                            str(ios_restriction)
-                            + ", "
-                            + str(android_restriction)
+                        str(ios_restriction) + ", " + str(android_restriction)
                     )
                 else:
                     user_restrictions = str(ios_restriction)
@@ -1746,86 +1877,59 @@ class Telepathy_cli:
 @click.option(
     "--target",
     "-t",
-    multiple = True,
-    help = "Specifies a chat to investigate.",
-    )
+    multiple=True,
+    help="Specifies a chat to investigate.",
+)
 @click.option(
     "--bot",
     "-b",
-    multiple = True,
-    help = "BOT info, analyzing bot info, it needs API_HASH:API_ID.",
-    )
+    multiple=True,
+    help="BOT info, analyzing bot info, it needs API_HASH:API_ID.",
+)
 @click.option(
     "--comprehensive",
     "-c",
-    is_flag = True,
-    help = "Comprehensive scan, includes archiving.",
-    )
+    is_flag=True,
+    help="Comprehensive scan, includes archiving.",
+)
 @click.option(
-    "--media", 
-    "-m",
-    is_flag = True,
-    help = "Archives media in the specified chat."
-    )
+    "--media", "-m", is_flag=True, help="Archives media in the specified chat."
+)
+@click.option("--forwards", "-f", is_flag=True, help="Scrapes forwarded messages.")
+@click.option("--user", "-u", is_flag=True, help="Looks up a specified user ID.")
 @click.option(
-    "--forwards",
-    "-f",
-    is_flag = True,
-    help = "Scrapes forwarded messages."
-    )
-@click.option(
-    "--user",
-    "-u",
-    is_flag = True,
-    help = "Looks up a specified user ID."
-    )
-@click.option(
-    "--location",
-    "-l",
-    is_flag = True,
-    help = "Finds users near to specified coordinates."
-    )
-@click.option(
-    "--alt", 
-    "-a", 
-    default = 0,
-    help = "Uses an alternative login."
-    )
-@click.option(
-    "--json", 
-    "-j", 
-    is_flag = True, 
-    default = False, 
-    help = "Export to JSON."
-    )
+    "--location", "-l", is_flag=True, help="Finds users near to specified coordinates."
+)
+@click.option("--alt", "-a", default=0, help="Uses an alternative login.")
+@click.option("--json", "-j", is_flag=True, default=False, help="Export to JSON.")
 @click.option(
     "--export",
     "-e",
-    is_flag = True,
-    default = False,
-    help = "Export a list of chats your account is part of.",
-    )
+    is_flag=True,
+    default=False,
+    help="Export a list of chats your account is part of.",
+)
 @click.option(
     "--replies",
     "-r",
-    is_flag = True,
-    default = False,
-    help = "Enable replies analysis in channels.",
-    )
+    is_flag=True,
+    default=False,
+    help="Enable replies analysis in channels.",
+)
 @click.option(
     "--translate",
     "-tr",
-    is_flag = True,
-    default = False,
-    help = "Enable translation of chat content.",
-    )
+    is_flag=True,
+    default=False,
+    help="Enable translation of chat content.",
+)
 @click.option(
     "--triangulate_membership",
     "-tm",
     is_flag=True,
     default=False,
-    help = "Get interpolation from a list of groups",
-    )
+    help="Get interpolation from a list of groups",
+)
 def cli(
     target,
     comprehensive,
@@ -1839,11 +1943,26 @@ def cli(
     export,
     replies,
     translate,
-    triangulate_membership
-    ):
-    telepathy_cli = Telepathy_cli(target,comprehensive,media,forwards,user,bot,location,alt,json,export,replies,translate,triangulate_membership)
+    triangulate_membership,
+):
+    telepathy_cli = Telepathy_cli(
+        target,
+        comprehensive,
+        media,
+        forwards,
+        user,
+        bot,
+        location,
+        alt,
+        json,
+        export,
+        replies,
+        translate,
+        triangulate_membership,
+    )
     loop = asyncio.get_event_loop()
     loop.run_until_complete(telepathy_cli.connect_tg_client_and_run())
+
 
 if __name__ == "__main__":
     cli()

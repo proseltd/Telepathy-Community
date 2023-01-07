@@ -7,11 +7,14 @@ from bs4 import BeautifulSoup
 import random
 import os
 
+
 def createPlaceholdeCls():
     class Object(object):
         pass
+
     a = Object()
     return a
+
 
 def print_banner():
     print(
@@ -24,10 +27,12 @@ def print_banner():
         /_/  \___/_/\___/ .___/\__,_/\__/_/ /_/\__, /
                        /_/                    /____/
         -- An OSINT toolkit for investigating Telegram chats.
-        -- Developed by @jordanwildon | Version """ + __version__ + """.
-        """ + Style.RESET_ALL
+        -- Developed by @jordanwildon | Version """
+        + __version__
+        + """.
+        """
+        + Style.RESET_ALL
     )
-
 
 
 def parse_tg_date(dd):
@@ -40,7 +45,7 @@ def parse_tg_date(dd):
     date = year + "-" + month + "-" + day
     mtime = hour + ":" + minute + ":" + second
     timestamp = date + "T" + mtime + "+00:00"
-    return {"timestamp":timestamp, "date":date, "mtime":mtime}
+    return {"timestamp": timestamp, "date": date, "mtime": mtime}
 
 
 def populate_user(user, group_or_chat):
@@ -94,6 +99,7 @@ def process_message(mess, user_lang):
         "message_text": mess_txt,
     }
 
+
 def process_description(desc, user_lang):
     if desc is not None:
         desc_txt = '"' + desc + '"'
@@ -119,13 +125,10 @@ def process_description(desc, user_lang):
         "description_text": desc_txt,
     }
 
-def color_print_green(first_string,second_string):
-    print(
-        Fore.GREEN
-        + first_string
-        + Style.RESET_ALL
-        + second_string
-    )
+
+def color_print_green(first_string, second_string):
+    print(Fore.GREEN + first_string + Style.RESET_ALL + second_string)
+
 
 def parse_html_page(url):
     s = requests.Session()
@@ -139,24 +142,18 @@ def parse_html_page(url):
     group_description = ""
     total_participants = ""
     try:
-        name = soup.find(
-            "div", {"class": ["tgme_page_title"]}
-        ).text
+        name = soup.find("div", {"class": ["tgme_page_title"]}).text
     except:
         name = "Not found"
     try:
-        group_description = soup.find(
-            "div", {"class": ["tgme_page_description"]}
-        ).text
-        descript = Fore.GREEN + "Description: " + Style.RESET_ALL+ group_description
+        group_description = soup.find("div", {"class": ["tgme_page_description"]}).text
+        descript = Fore.GREEN + "Description: " + Style.RESET_ALL + group_description
     except:
         group_description = "None"
-        descript = Fore.GREEN + "Description: " + Style.RESET_ALL+ group_description
+        descript = Fore.GREEN + "Description: " + Style.RESET_ALL + group_description
 
     try:
-        group_participants = soup.find(
-            "div", {"class": ["tgme_page_extra"]}
-        ).text
+        group_participants = soup.find("div", {"class": ["tgme_page_extra"]}).text
         sep = "members"
         stripped = group_participants.split(sep, 1)[0]
         total_participants = (
@@ -167,7 +164,11 @@ def parse_html_page(url):
         )
     except:
         total_participants = "Not found"
-    return {"name":name,"group_description":group_description, "total_participants":total_participants}
+    return {
+        "name": name,
+        "group_description": group_description,
+        "total_participants": total_participants,
+    }
 
 
 def generate_textwrap(text_string, size=70):
@@ -179,6 +180,7 @@ def generate_textwrap(text_string, size=70):
         subsequent_indent="                  ",
     )
 
+
 def print_shell(type, obj):
     if type == "user":
         color_print_green(" [+] ", "User details for " + obj.target)
@@ -187,9 +189,7 @@ def print_shell(type, obj):
         color_print_green("  ├  Verification: ", str(obj.verified))
         color_print_green("  ├  Photo ID: ", str(obj.user_photo))
         color_print_green("  ├  Phone number: ", str(obj.phone))
-        color_print_green(
-            "  ├  Access hash: ", str(obj.access_hash)
-        )
+        color_print_green("  ├  Access hash: ", str(obj.access_hash))
         color_print_green("  ├  Language: ", str(obj.lang_code))
         color_print_green("  ├  Bot: ", str(obj.bot))
         color_print_green("  ├  Scam: ", str(obj.scam))
@@ -214,9 +214,7 @@ def print_shell(type, obj):
         color_print_green("  ├  ", d_wrapper.fill(obj.group_description))
         if obj.translated_description != obj.group_description:
             color_print_green("  ├  ", td_wrapper.fill(obj.translated_description))
-        color_print_green(
-            "  ├  Total participants: ", str(obj.total_participants)
-        )
+        color_print_green("  ├  Total participants: ", str(obj.total_participants))
 
         if type == "group_recap":
             color_print_green(
@@ -232,56 +230,32 @@ def print_shell(type, obj):
         color_print_green("  ├  Chat type: ", str(obj.chat_type))
         color_print_green("  ├  Chat id: ", str(obj.id))
         color_print_green("  ├  Access hash: ", str(obj.access_hash))
-        if type ==  "channel_recap":
+        if type == "channel_recap":
             scam_status = str(obj.scam)
             color_print_green("  ├  Scam: ", str(scam_status))
         color_print_green("  ├  First post date: ", str(obj.first_post))
         if type == "group_recap":
-            color_print_green(
-                "  ├  Memberlist saved to: ", obj.memberlist_filename
-            )
-        color_print_green(
-            "  └  Restrictions: ", (str(obj.group_status))
-        )
+            color_print_green("  ├  Memberlist saved to: ", obj.memberlist_filename)
+        color_print_green("  └  Restrictions: ", (str(obj.group_status)))
 
     if type == "group_stat":
         color_print_green(" [+] Chat archive saved", "")
         color_print_green("  ┬  Chat statistics", "")
-        color_print_green(
-            "  ├  Number of messages found: ", str(obj.messages_found)
-        )
-        color_print_green(
-            "  ├  Top poster 1: ", str(obj.poster_one)
-        )
-        color_print_green(
-            "  ├  Top poster 2: ", str(obj.poster_two)
-        )
-        color_print_green(
-            "  ├  Top poster 3: ", str(obj.poster_three)
-        )
-        color_print_green(
-            "  ├  Top poster 4: ", str(obj.poster_four)
-        )
-        color_print_green(
-            "  ├  Top poster 5: ", str(obj.poster_five)
-        )
-        color_print_green(
-            "  ├  Total unique posters: ", str(obj.unique_active)
-        )
-        color_print_green(
-            "  └  Archive saved to: ", str(obj.file_archive)
-        )
+        color_print_green("  ├  Number of messages found: ", str(obj.messages_found))
+        color_print_green("  ├  Top poster 1: ", str(obj.poster_one))
+        color_print_green("  ├  Top poster 2: ", str(obj.poster_two))
+        color_print_green("  ├  Top poster 3: ", str(obj.poster_three))
+        color_print_green("  ├  Top poster 4: ", str(obj.poster_four))
+        color_print_green("  ├  Top poster 5: ", str(obj.poster_five))
+        color_print_green("  ├  Total unique posters: ", str(obj.unique_active))
+        color_print_green("  └  Archive saved to: ", str(obj.file_archive))
         return
 
     if type == "channel_stat":
         color_print_green(" [+] Channel archive saved", "")
         color_print_green("  ┬  Channel statistics", "")
-        color_print_green(
-            "  ├  Number of messages found: ", str(obj.messages_found)
-        )
-        color_print_green(
-            "  └  Archive saved to: ", str(obj.file_archive)
-        )
+        color_print_green("  ├  Number of messages found: ", str(obj.messages_found))
+        color_print_green("  └  Archive saved to: ", str(obj.file_archive))
         return
 
     if type == "reply_stat":
@@ -300,31 +274,17 @@ def print_shell(type, obj):
                 "  └  Active members list who replied to messages, saved to: ",
                 str(obj.reply_memberlist_filename),
             )
-        color_print_green(
-            "  ┬  Top replier 1: ", str(obj.replier_one)
-        )
-        color_print_green(
-            "  ├  Top replier 2: ", str(obj.replier_two)
-        )
-        color_print_green(
-            "  ├  Top replier 3: ", str(obj.replier_three)
-        )
-        color_print_green(
-            "  ├  Top replier 4: ", str(obj.replier_four)
-        )
-        color_print_green(
-            "  ├  Top replier 5: ", str(obj.replier_five)
-        )
-        color_print_green(
-            "  └   Total unique repliers: ", str(obj.replier_unique)
-        )
+        color_print_green("  ┬  Top replier 1: ", str(obj.replier_one))
+        color_print_green("  ├  Top replier 2: ", str(obj.replier_two))
+        color_print_green("  ├  Top replier 3: ", str(obj.replier_three))
+        color_print_green("  ├  Top replier 4: ", str(obj.replier_four))
+        color_print_green("  ├  Top replier 5: ", str(obj.replier_five))
+        color_print_green("  └   Total unique repliers: ", str(obj.replier_unique))
 
     if type == "forwarder_stat":
         color_print_green(" [+] Forward scrape complete", "")
         color_print_green("  ┬  Statistics", "")
-        color_print_green(
-            "  ├  Forwarded messages found: ", str(obj.forward_count)
-        )
+        color_print_green("  ├  Forwarded messages found: ", str(obj.forward_count))
         color_print_green(
             "  ├  Forwards from active public chats: ",
             str(obj.forwards_found),
@@ -334,40 +294,34 @@ def print_shell(type, obj):
                 "  ├  Forwards from private (or now private) chats: ",
                 str(obj.private_count),
             )
-        color_print_green(
-            "  ├  Unique forward sources: ", str(obj.unique_forwards)
-        )
-        color_print_green(
-            "  ├  Top forward source 1: ", str(obj.forward_one)
-        )
-        color_print_green(
-            "  ├  Top forward source 2: ", str(obj.forward_two)
-        )
-        color_print_green(
-            "  ├  Top forward source 3: ", str(obj.forward_three)
-        )
-        color_print_green(
-            "  ├  Top forward source 4: ", str(obj.forward_four)
-        )
-        color_print_green(
-            "  ├  Top forward source 5: ", str(obj.forward_five)
-        )
+        color_print_green("  ├  Unique forward sources: ", str(obj.unique_forwards))
+        color_print_green("  ├  Top forward source 1: ", str(obj.forward_one))
+        color_print_green("  ├  Top forward source 2: ", str(obj.forward_two))
+        color_print_green("  ├  Top forward source 3: ", str(obj.forward_three))
+        color_print_green("  ├  Top forward source 4: ", str(obj.forward_four))
+        color_print_green("  ├  Top forward source 5: ", str(obj.forward_five))
         color_print_green("  └  Edgelist saved to: ", obj.edgelist_file)
+
 
 def create_path(path_d):
     if not os.path.exists(path_d):
         os.makedirs(path_d)
     return path_d
 
-def create_file_report(save_dir,name,type,extension,file_time,append_time=True):
+
+def create_file_report(save_dir, name, type, extension, file_time, append_time=True):
     _time_append = ""
     if append_time:
-        _time_append = "_"+file_time
-    return os.path.join("{}".format(save_dir),"{}{}_{}.{}".format(name,_time_append,type,extension))
+        _time_append = "_" + file_time
+    return os.path.join(
+        "{}".format(save_dir), "{}{}_{}.{}".format(name, _time_append, type, extension)
+    )
+
 
 def clean_private_invite(url):
     if "https://t.me/+" in url:
-        return(url.replace('https://t.me/+', 'https://t.me/joinchat/'))
+        return url.replace("https://t.me/+", "https://t.me/joinchat/")
+
 
 def evaluate_reactions(message):
     total_reactions = 0
@@ -377,41 +331,40 @@ def evaluate_reactions(message):
         i = range(len(reactions))
         for idx, i in enumerate(reactions):
             total_reactions = total_reactions + i.count
-            reactions["thumbs_up"] = i.count if i.reaction == '👍' else 0
-            reactions["thumbs_down"] = i.count if i.reaction == '👎' else 0
-            reactions["heart"] = i.count if i.reaction == '❤️' else 0
-            reactions["fire"] = i.count if i.reaction == '🔥' else 0
-            reactions["smile_with_hearts"] = i.count if i.reaction == '🥰' else 0
-            reactions["clap"] = i.count if i.reaction == '👏' else 0
-            reactions["smile"] = i.count if i.reaction == '😁' else 0
-            reactions["thinking"] = i.count if i.reaction == '🤔' else 0
-            reactions["exploding_head"] = i.count if i.reaction == '🤯' else 0
-            reactions["scream"] = i.count if i.reaction == '😱' else 0
-            reactions["angry"] = i.count if i.reaction == '🤬' else 0
-            reactions["single_tear"] = i.count if i.reaction == '😢' else 0
-            reactions["party_popper"] = i.count if i.reaction == '🎉' else 0
-            reactions["starstruck"] = i.count if i.reaction == '🤩' else 0
-            reactions["vomiting"] = i.count if i.reaction == '🤮' else 0
-            reactions["poop"] = i.count if i.reaction == '💩' else 0
-            reactions["praying"] = i.count if i.reaction == '🙏' else 0
+            reactions["thumbs_up"] = i.count if i.reaction == "👍" else 0
+            reactions["thumbs_down"] = i.count if i.reaction == "👎" else 0
+            reactions["heart"] = i.count if i.reaction == "❤️" else 0
+            reactions["fire"] = i.count if i.reaction == "🔥" else 0
+            reactions["smile_with_hearts"] = i.count if i.reaction == "🥰" else 0
+            reactions["clap"] = i.count if i.reaction == "👏" else 0
+            reactions["smile"] = i.count if i.reaction == "😁" else 0
+            reactions["thinking"] = i.count if i.reaction == "🤔" else 0
+            reactions["exploding_head"] = i.count if i.reaction == "🤯" else 0
+            reactions["scream"] = i.count if i.reaction == "😱" else 0
+            reactions["angry"] = i.count if i.reaction == "🤬" else 0
+            reactions["single_tear"] = i.count if i.reaction == "😢" else 0
+            reactions["party_popper"] = i.count if i.reaction == "🎉" else 0
+            reactions["starstruck"] = i.count if i.reaction == "🤩" else 0
+            reactions["vomiting"] = i.count if i.reaction == "🤮" else 0
+            reactions["poop"] = i.count if i.reaction == "💩" else 0
+            reactions["praying"] = i.count if i.reaction == "🙏" else 0
     else:
-        reactions["total_reactions"] = 'N/A'
-        reactions["thumbs_up"] = 'N/A'
-        reactions["thumbs_down"] = 'N/A'
-        reactions["heart"] = 'N/A'
-        reactions["fire"] = 'N/A'
-        reactions["smile_with_hearts"] = 'N/A'
-        reactions["clap"] = 'N/A'
-        reactions["smile"] = 'N/A'
-        reactions["thinking"] = 'N/A'
-        reactions["exploding_head"] = 'N/A'
-        reactions["scream"] = 'N/A'
-        reactions["angry"] = 'N/A'
-        reactions["single_tear"] = 'N/A'
-        reactions["party_popper"] = 'N/A'
-        reactions["starstruck"] = 'N/A'
-        reactions["vomiting"] = 'N/A'
-        reactions["poop"] = 'N/A'
-        reactions["praying"] = 'N/A'
+        reactions["total_reactions"] = "N/A"
+        reactions["thumbs_up"] = "N/A"
+        reactions["thumbs_down"] = "N/A"
+        reactions["heart"] = "N/A"
+        reactions["fire"] = "N/A"
+        reactions["smile_with_hearts"] = "N/A"
+        reactions["clap"] = "N/A"
+        reactions["smile"] = "N/A"
+        reactions["thinking"] = "N/A"
+        reactions["exploding_head"] = "N/A"
+        reactions["scream"] = "N/A"
+        reactions["angry"] = "N/A"
+        reactions["single_tear"] = "N/A"
+        reactions["party_popper"] = "N/A"
+        reactions["starstruck"] = "N/A"
+        reactions["vomiting"] = "N/A"
+        reactions["poop"] = "N/A"
+        reactions["praying"] = "N/A"
     return total_reactions, reactions
-
