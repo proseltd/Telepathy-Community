@@ -14,7 +14,7 @@ import time
 import configparser
 import asyncio
 
-from utils import (
+from src.telepathy.utils import (
     print_banner,
     color_print_green,
     populate_user,
@@ -48,7 +48,7 @@ from telethon import TelegramClient, functions, types, utils
 from telethon.utils import get_display_name, get_message_id
 from alive_progress import alive_bar
 from colorama import Fore, Style
-from const import telepathy_file
+from src.telepathy.const import telepathy_file
 
 """
 try:
@@ -102,8 +102,7 @@ class Group_Chat_Analisys:
         comprehensive,
         media,
         json,
-        translate,
-        alphanumeric,
+        translate
     ):
         self.client = client
         self._target = target
@@ -179,17 +178,17 @@ class Group_Chat_Analisys:
         current_entity = None
         try:
             current_entity = await self.client.get_entity(_target)
-        except:
+        except Exception as exx:
             pass
         if not current_entity:
             try:
                 current_entity = await self.client.get_entity(PeerChannel(_target))
-            except:
+            except Exception as exx:
                 pass
         if not current_entity:
             try:
                 current_entity = await self.client.get_entity(PeerChat(_target))
-            except:
+            except Exception as exx:
                 pass
         return current_entity
 
@@ -295,8 +294,8 @@ class Group_Chat_Analisys:
         else:
             _result["chat_type"] = "Chat"
 
-        if _result["entity.username"]:
-            _result["group_url"] = "http://t.me/" + self._entity.username
+        if _result["entity"].username:
+            _result["group_url"] = "http://t.me/" + _result["entity"].username
             _result["group_username"] = _result["entity"].username
             web_req = parse_html_page(_result["group_url"])
         elif "https://t.me/" in _handle:
@@ -331,7 +330,7 @@ class Group_Chat_Analisys:
             _result["datepost"] = parse_tg_date(message.date)
             _result["date"] = _result["date"]
             _result["mtime"] = _result["mtime"]
-            _result["first_post"] = _result["timestamp"]
+            _result["first_post"] = _result["datepost"]["timestamp"]
             break
 
         if _result["entity"].restriction_reason is not None:
@@ -392,6 +391,7 @@ class Group_Chat_Analisys:
             web_req = parse_html_page(self._group_url)
             self._group_username = "Private group"
         else:
+            web_req = None
             self._group_url, self._group_username = "Private group", "Private group"
 
         if web_req:
@@ -414,9 +414,9 @@ class Group_Chat_Analisys:
 
         async for message in self.client.iter_messages(_handle, reverse=True):
             self._datepost = parse_tg_date(message.date)
-            self._date = self.datepost["date"]
-            self._mtime = self.datepost["mtime"]
-            self._first_post = self.datepost["timestamp"]
+            self._date = self._datepost["date"]
+            self._mtime = self._datepost["mtime"]
+            self._first_post = self._datepost["timestamp"]
             break
 
         if self._entity.restriction_reason is not None:
@@ -531,6 +531,7 @@ class Group_Chat_Analisys:
         if not _target:
             _target = self._target
         _target = clean_private_invite(_target)
+        self._found_participants = 0
         await self.retrieve_chat_group_entity(_target)
 
         if self.basic and not self.comp_check:
@@ -666,7 +667,12 @@ class Group_Chat_Analisys:
             except AttributeError:
                 pass
 
-    async def retrieve_history(self):
+    async def retrieve_self_history(self,_target):
+        if not _target:
+            _target = self._target
+        _target = clean_private_invite(_target)
+        await self.retrieve_chat_group_entity(_target)
+
         get_history = GetHistoryRequest(
             peer=self._entity,
             offset_id=0,
@@ -675,8 +681,9 @@ class Group_Chat_Analisys:
             limit=1,
             max_id=0,
             min_id=0,
+            hash=0
         )
-        history = self.client(get_history)
+        history = await self.client(get_history)
         if isinstance(history, Messages):
             count = len(history.messages)
         else:
@@ -771,6 +778,7 @@ class Group_Chat_Analisys:
 
                         except Exception as e:
                             if e is ChannelPrivateError:
+                                private_count += 1
                                 print("Private channel")
                             continue
 
@@ -1522,6 +1530,8 @@ class Telepathy_cli:
 
     alt = None
     target_type = None
+    export = False
+
 
     def __init__(
         self,
@@ -1553,8 +1563,7 @@ class Telepathy_cli:
         self.translate_check = True if translate else False
         self.last_date, self.chunk_size, self.user_language = None, 1000, "en"
         self.bot = bot is not None
-        self.alt = alt
-
+        self.alt = 0 if alt is None else int(alt)
         self.filetime = datetime.datetime.now().strftime("%Y_%m_%d-%H_%M")
         self.filetime_clean = str(self.filetime)
 
@@ -1576,22 +1585,32 @@ class Telepathy_cli:
             self.t = " "
 
         self.triangulate = True if triangulate_membership else False
-        self.telepathy_file = self.config_p["telepathy"]["telepathy_files"]
-        self.json_file = os.path.join(
-            self.telepathy_file, self.config_p["telepathy"]["json_file"]
-        )
-        self.login = os.path.join(
-            self.telepathy_file, self.config_p["telepathy"]["login"]
-        )
-        self.log_file = os.path.join(
-            self.telepathy_file, self.config_p["telepathy"]["log_file"]
-        )
-        self.export_file = os.path.join(
-            self.telepathy_file, self.config_p["telepathy"]["export_file"]
-        )
+
+        if "telepathy" in self.config_p.keys():
+            self.telepathy_file = self.config_p["telepathy"]["telepathy_files"]
+            self.json_file = os.path.join(
+                self.telepathy_file, self.config_p["telepathy"]["json_file"]
+            )
+            self.login = os.path.join(
+                self.telepathy_file, self.config_p["telepathy"]["login"]
+            )
+            self.log_file = os.path.join(
+                self.telepathy_file, self.config_p["telepathy"]["log_file"]
+            )
+            self.export_file = os.path.join(
+                self.telepathy_file, self.config_p["telepathy"]["export_file"]
+            )
+        else:
+            self.telepathy_file = os.path.join("..","src","telepathy","telepathy_files")
+            self.json_file = os.path.join(self.telepathy_file,"json_files")
+            self.login = os.path.join(self.telepathy_file,"login.txt")
+            self.log_file = os.path.join(self.telepathy_file,"log.csv")
+            self.export_file = os.path.join(self.telepathy_file,"export.csv")
+
         self.create_path(self.telepathy_file)
         self.target = target
         self.create_tg_client()
+
 
     @staticmethod
     def create_path(path_d):
@@ -1636,7 +1655,7 @@ class Telepathy_cli:
         else:
             self.api_id, self.api_hash, self.phone_number = self.retrieve_alt()
         """End of API details"""
-        self.client = TelegramClient(self.phone_number, self.api_id, self.api_hash)
+        self.client = TelegramClient(os.path.join(self.telepathy_file,"{}.session".format(self.phone_number)), self.api_id, self.api_hash)
 
     async def connect_tg_client_and_run(self):
         await self.client.connect()
@@ -1960,7 +1979,8 @@ def cli(
         translate,
         triangulate_membership,
     )
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     loop.run_until_complete(telepathy_cli.connect_tg_client_and_run())
 
 

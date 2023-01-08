@@ -1,6 +1,6 @@
 from colorama import Fore, Style
 from googletrans import Translator
-from const import __version__, user_agent
+from src.telepathy.const import __version__, user_agent
 import requests
 import textwrap
 from bs4 import BeautifulSoup
@@ -321,7 +321,7 @@ def create_file_report(save_dir, name, type, extension, file_time, append_time=T
 def clean_private_invite(url):
     if "https://t.me/+" in url:
         return url.replace("https://t.me/+", "https://t.me/joinchat/")
-
+    return url
 
 def evaluate_reactions(message):
     total_reactions = 0
