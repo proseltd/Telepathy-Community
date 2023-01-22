@@ -192,10 +192,10 @@ class Group_Chat_Analisys:
                 pass
         return current_entity
 
-    async def retrieve_memberlist(self):
+    async def looking_for_members(self,_target):
         members = []
         members_df = None
-        all_participants = await self.client.get_participants(self._target, limit=5000)
+        all_participants = await self.client.get_participants(_target, limit=5000)
 
         for user in all_participants:
             members_df = pd.DataFrame(
@@ -208,8 +208,11 @@ class Group_Chat_Analisys:
                     "Group name",
                 ],
             )
-            members.append(populate_user(user, self._target))
+            members.append(populate_user(user, _target))
+        return members_df, all_participants
 
+    async def retrieve_memberlist(self):
+        members_df, all_participants = await self.looking_for_members(self._target)
         if members_df is not None:
             with open(self.memberlist_filename, "w+", encoding="utf-8") as save_members:
                 members_df.to_csv(save_members, sep=";")
@@ -667,9 +670,11 @@ class Group_Chat_Analisys:
             except AttributeError:
                 pass
 
-    async def retrieve_self_history(self,_target):
+    async def retrieve_self_history(self,_target=None):
+        cc=False
         if not _target:
             _target = self._target
+            cc=True
         _target = clean_private_invite(_target)
         await self.retrieve_chat_group_entity(_target)
 
@@ -689,8 +694,13 @@ class Group_Chat_Analisys:
         else:
             count = history.count
 
-        self.history = history
-        self.history_count = count
+        if cc:
+            self.history = history
+            self.history_count = count
+            return None, None
+        else:
+            return history, count
+
 
     async def process_group_channel_messages(self, _target):
         if self.forwards_check is True and self.comp_check is False:
@@ -713,7 +723,8 @@ class Group_Chat_Analisys:
                 ],
             )
 
-            async for message in self.client.iter_messages(_target):
+            await self.retrieve_self_history()
+            for message in self.history.messages:
                 if message.forward is not None:
                     forward_count += 1
 
@@ -855,7 +866,6 @@ class Group_Chat_Analisys:
         else:
             if self.comp_check is True:
 
-                messages = self.client.iter_messages(_target)
                 files = []
                 message_list = []
                 forwards_list = []
@@ -869,16 +879,13 @@ class Group_Chat_Analisys:
 
                 color_print_green(" [!] ", "Calculating number of messages...")
 
-                async for message in messages:
-                    if message is not None:
-                        message_count += 1
-
+                await self.retrieve_self_history()
                 print("\n")
                 color_print_green(" [-] ", "Fetching message archive...")
                 progress_bar = Fore.GREEN + " [-] " + Style.RESET_ALL + "Progress: "
 
                 with alive_bar(
-                    message_count,
+                    self.history_count,
                     dual_line=True,
                     title=progress_bar,
                     length=20,
@@ -1608,6 +1615,8 @@ class Telepathy_cli:
             self.export_file = os.path.join(self.telepathy_file,"export.csv")
 
         self.create_path(self.telepathy_file)
+        self.overlaps_dir = os.path.join(self.telepathy_file,"overlaps")
+        self.create_path(self.overlaps_dir)
         self.target = target
         self.create_tg_client()
 
@@ -1821,6 +1830,38 @@ class Telepathy_cli:
                 " [!] ",
                 "The bot_id/bot_hash isn't valid. Pls insert a valid api_id//api_hash",
             )
+
+    @staticmethod
+    def reiterate_overlaps(dp, dp2, join):
+        return pd.merge(dp,dp2,on=join)
+    async def telepangulate(self):
+        current_set = None
+        filename = "overlaps_"
+        if len(self.target)>1:
+            group_processor = Group_Chat_Analisys(
+                    self.target[0],
+                    self.client,
+                    self.log_file,
+                    self.filetime,
+                    self.reply_analysis,
+                    self.forwards_check,
+                    self.comp_check,
+                    self.media_archive,
+                    self.json_check,
+                    self.translate_check,
+                )
+            pd_members, = group_processor.looking_for_members()
+            filename = filename+"_"+self.target[0]
+            for _t, i in self.target:
+                filename = filename +"_"+ _t
+                dp_t = group_processor.looking_for_members(_t)
+                if i == 1:
+                    current_set = pd.merge(pd_members,dp_t, how="inner", on=["User ID"])
+                elif i > 1:
+                    current_set = pd.merge(current_set,dp_t, how="inner", on=["User ID"])
+        if(current_set):
+            filename = filename + ".csv"
+            current_set.to_csv(os.path.join(self.overlaps_dir, filename), sep=";")
 
     async def analyze_user(self, _target):
         my_user = None

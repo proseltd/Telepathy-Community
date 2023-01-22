@@ -327,9 +327,8 @@ def evaluate_reactions(message):
     total_reactions = 0
     reactions = {}
     if message.reactions:
-        reactions = message.reactions.results
-        i = range(len(reactions))
-        for idx, i in enumerate(reactions):
+        reactions_l = message.reactions.results
+        for idx, i in enumerate(reactions_l):
             total_reactions = total_reactions + i.count
             reactions["thumbs_up"] = i.count if i.reaction == "👍" else 0
             reactions["thumbs_down"] = i.count if i.reaction == "👎" else 0
