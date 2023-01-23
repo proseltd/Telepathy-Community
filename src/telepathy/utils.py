@@ -182,6 +182,18 @@ def generate_textwrap(text_string, size=70):
 
 
 def print_shell(type, obj):
+    if type == "bot":
+        color_print_green(" [+] ", "Bot details for " + str(obj.id))
+        color_print_green(f"  ├  Username: @{str(obj.username)}")
+        color_print_green(f"  ├  Name: {str(obj.first_name)}")
+        color_print_green(f"  └  Link: https://t.me/{str(obj.username)}")
+        print("\n")
+        color_print_green(" [+] ", "User related details for bot " + str(obj.id))
+        color_print_green(f"  ├  User id: @{str(obj.user_id)}")
+        color_print_green(f"  ├  User username: @{str(obj.user_username)}")
+        color_print_green(f"  ├  User name: {str(obj.user_first_name)}")
+        color_print_green(f"  └  Link: https://t.me/{str(obj.user_username)}")
+
     if type == "user":
         color_print_green(" [+] ", "User details for " + obj.target)
         color_print_green("  ├  Username: ", str(obj.username))

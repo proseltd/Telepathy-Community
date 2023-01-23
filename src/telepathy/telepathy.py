@@ -30,7 +30,7 @@ from src.telepathy.utils import (
     evaluate_reactions,
 )
 
-from telethon.tl.functions.messages import GetHistoryRequest
+from telethon.tl.functions.messages import GetHistoryRequest, GetDialogsRequest
 from telethon.tl.types.messages import Messages
 from telethon.errors import SessionPasswordNeededError, ChannelPrivateError
 from telethon.tl.types import (
@@ -43,7 +43,7 @@ from telethon.tl.types import (
     ChannelParticipantCreator,
     ChannelParticipantAdmin,
 )
-from telethon.tl.functions.messages import GetDialogsRequest
+from telethon.tl.functions.users import GetFullUserRequest
 from telethon import TelegramClient, functions, types, utils
 from telethon.utils import get_display_name, get_message_id
 from alive_progress import alive_bar
@@ -1613,9 +1613,9 @@ class Telepathy_cli:
             self.login = os.path.join(self.telepathy_file,"login.txt")
             self.log_file = os.path.join(self.telepathy_file,"log.csv")
             self.export_file = os.path.join(self.telepathy_file,"export.csv")
-
         self.create_path(self.telepathy_file)
         self.overlaps_dir = os.path.join(self.telepathy_file,"overlaps")
+        self.bots_dir = os.path.join(self.telepathy_file, "bots")
         self.create_path(self.overlaps_dir)
         self.target = target
         self.create_tg_client()
@@ -1821,15 +1821,57 @@ class Telepathy_cli:
         print_shell("location_report", distance_obj)
 
     async def analyze_bot(self):
-        ###TODO
         if ":" in self.bot:
             _bot_id = self.bot.split(":")[0]
             _bot_hash = self.bot.split(":")[1]
         else:
             color_print_green(
                 " [!] ",
-                "The bot_id/bot_hash isn't valid. Pls insert a valid api_id//api_hash",
+                "The bot_id:bot_hash isn't valid. Pls insert a valid bot_id:bot_hash",
             )
+
+        print(
+            Fore.GREEN
+            + " [!] "
+            + Style.RESET_ALL
+            + "Searching info about this bot id: "
+            + _bot_id
+            + "\n"
+        )
+
+        bot_info = await self.client().start(bot_token=self.bot)
+        bot_me = bot_info.get_me()
+        user = await bot_info(GetFullUserRequest(bot_me))
+
+
+        user_info = user.user.to_dict()
+        user_info['token'] = self.bot
+
+
+        '''
+        color_print_green(" [+] ", "Bot details for " + obj.id)
+        color_print_green(f"  ├  Username: @{str(obj.username)}")
+        color_print_green(f"  ├  Name: {str(obj.first_name)}")
+        color_print_green(f"  └  Link: https://t.me/{str(obj.username)}")
+        print("\n")
+        color_print_green(" [+] ", "User related details for bot " + obj.id)
+        color_print_green(f"  ├  User id: @{str(obj.user_id)}")
+        color_print_green(f"  ├  User username: @{str(obj.user_username)}")
+        color_print_green(f"  ├  User name: {str(obj.user_first_name)}")
+        color_print_green(f"  └  Link: https://t.me/{str(obj.user_username)}")
+        '''
+
+        bot_obj = createPlaceholdeCls()
+        bot_obj.id = bot_me.id
+        bot_obj.first_name = bot_me.first_name
+        bot_obj.username = bot_me.username
+
+        bot_obj.user_id = user.user.id
+        bot_obj.user_username = user.user.username
+        bot_obj.user_first_name = bot_me.user_first_name
+
+        ###TODO FIX TYPE, TEST, SAVEFILE EXPLORE/DUMP  CHAT HISTORY
+        print_shell("bot",bot_obj )
 
     @staticmethod
     def reiterate_overlaps(dp, dp2, join):
