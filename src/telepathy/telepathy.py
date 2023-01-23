@@ -1842,30 +1842,13 @@ class Telepathy_cli:
         bot_info = await self.client().start(bot_token=self.bot)
         bot_me = bot_info.get_me()
         user = await bot_info(GetFullUserRequest(bot_me))
-
-
         user_info = user.user.to_dict()
         user_info['token'] = self.bot
-
-
-        '''
-        color_print_green(" [+] ", "Bot details for " + obj.id)
-        color_print_green(f"  ├  Username: @{str(obj.username)}")
-        color_print_green(f"  ├  Name: {str(obj.first_name)}")
-        color_print_green(f"  └  Link: https://t.me/{str(obj.username)}")
-        print("\n")
-        color_print_green(" [+] ", "User related details for bot " + obj.id)
-        color_print_green(f"  ├  User id: @{str(obj.user_id)}")
-        color_print_green(f"  ├  User username: @{str(obj.user_username)}")
-        color_print_green(f"  ├  User name: {str(obj.user_first_name)}")
-        color_print_green(f"  └  Link: https://t.me/{str(obj.user_username)}")
-        '''
 
         bot_obj = createPlaceholdeCls()
         bot_obj.id = bot_me.id
         bot_obj.first_name = bot_me.first_name
         bot_obj.username = bot_me.username
-
         bot_obj.user_id = user.user.id
         bot_obj.user_username = user.user.username
         bot_obj.user_first_name = bot_me.user_first_name
