@@ -1910,7 +1910,7 @@ class Telepathy_cli:
                 my_user = await self.client.get_entity(_target)
             else:
                 user = int(_target)
-                my_user = await self.client.get_entity(PeerUser(int(user)))
+                my_user = await self.client.get_entity(user)
 
             user_first_name = my_user.first_name
             user_last_name = my_user.last_name
@@ -1957,10 +1957,11 @@ class Telepathy_cli:
             setattr(my_user, "user_full_name", str(user_full_name))
             setattr(my_user, "user_photo", str(user_photo))
             setattr(my_user, "user_status", str(user_status))
+            setattr(my_user, "id", str(my_user.id))
             setattr(my_user, "target", _target)
             print_shell("user", my_user)
 
-        except ValueError:
+        except ValueError as exx:
             pass
 
         if my_user is None:
