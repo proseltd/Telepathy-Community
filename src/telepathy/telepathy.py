@@ -176,21 +176,32 @@ class Group_Chat_Analisys:
 
     async def retrieve_entity(self, _target):
         current_entity = None
+        target = None
         try:
             current_entity = await self.client.get_entity(_target)
+            target = _target
         except Exception as exx:
+            try:
+                current_entity = await self.client.get_entity(int(_target))
+                target = int(_target)
+            except:
+                pass
             pass
         if not current_entity:
             try:
                 current_entity = await self.client.get_entity(PeerChannel(_target))
+                target = _target
             except Exception as exx:
                 pass
         if not current_entity:
             try:
                 current_entity = await self.client.get_entity(PeerChat(_target))
+                target = _target
             except Exception as exx:
                 pass
-        return current_entity
+        if type(target) is int and current_entity.username:
+            target = current_entity.username
+        return current_entity, target
 
     async def looking_for_members(self, _target):
         members = []
@@ -240,7 +251,7 @@ class Group_Chat_Analisys:
         _result = {"entity": None}
         web_req = None
 
-        _result["entity"] = await self.retrieve_entity(_handle)
+        _result["entity"], self._target = await self.retrieve_entity(_handle)
 
         if not _result["entity"] or (
             _result["entity"].__class__ == User and _check_user
@@ -250,10 +261,12 @@ class Group_Chat_Analisys:
                     " [!] ",
                     "You can't search for users using flag -c, run Telepathy using the flag -u.",
                 )
+                exit(1)
             else:
                 color_print_green(
                     " [!] ", "Telegram handle: {} wasn't found. !!!!".format(_handle)
                 )
+                exit(1)
             return
         elif _check_user:
             if _result["entity"].__class__ == User:
@@ -329,7 +342,7 @@ class Group_Chat_Analisys:
         _result["datepost"] = "N/A"
         _result["mtime"] = "N/A"
 
-        async for message in self.client.iter_messages(_handle, reverse=True):
+        async for message in self.client.iter_messages(self._target, reverse=True):
             _result["datepost"] = parse_tg_date(message.date)
             _result["date"] = _result["date"]
             _result["mtime"] = _result["mtime"]
@@ -410,29 +423,11 @@ class Group_Chat_Analisys:
         else:
             self._translated_description = "N/A"
 
-        self._first_post = "Not found"
-        self._date = "N/A"
-        self._datepost = "N/A"
-        self._mtime = "N/A"
-
-        async for message in self.client.iter_messages(_handle, reverse=True):
-            self._datepost = parse_tg_date(message.date)
-            self._date = self._datepost["date"]
-            self._mtime = self._datepost["mtime"]
-            self._first_post = self._datepost["timestamp"]
-            break
-
-        if self._entity.restriction_reason is not None:
-            ios_restriction = self._entity.restriction_reason[0]
-            if 1 in self._entity.restriction_reason:
-                android_restriction = self._entity.restriction_reason[1]
-                self._group_status = (
-                    str(ios_restriction) + ", " + str(android_restriction)
-                )
-            else:
-                self._group_status = str(ios_restriction)
-        else:
-            self._group_status = "None"
+        self._group_status = _entitydetails["group_status"]
+        self._first_post = _entitydetails["first_post"]
+        self._date = _entitydetails["date"]
+        self._datepost = _entitydetails["datepost"]
+        self._mtime = _entitydetails["mtime"]
 
     def create_dirs_files(self):
         self.save_directory = None
@@ -582,10 +577,9 @@ class Group_Chat_Analisys:
                 print_flag = "channel_recap"
             print_shell(print_flag, self._entity)
             self.telepathy_log_run()
-            await self.process_group_channel_messages(_target)
+            await self.process_group_channel_messages(self._target)
 
     async def f_export(self):
-
         exports = []
         for Dialog in await self.client.get_dialogs():
             try:
@@ -683,6 +677,7 @@ class Group_Chat_Analisys:
         if not _target:
             _target = self._target
             cc = True
+
         _target = clean_private_invite(_target)
         await self.retrieve_chat_group_entity(_target)
 

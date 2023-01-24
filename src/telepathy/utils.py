@@ -334,8 +334,9 @@ def create_file_report(save_dir, name, type, extension, file_time, append_time=T
 
 
 def clean_private_invite(url):
-    if "https://t.me/+" in url:
-        return url.replace("https://t.me/+", "https://t.me/joinchat/")
+    if type(url) is not int:
+        if "https://t.me/+" in url:
+            return url.replace("https://t.me/+", "https://t.me/joinchat/")
     return url
 
 
