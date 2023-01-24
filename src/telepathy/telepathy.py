@@ -102,7 +102,7 @@ class Group_Chat_Analisys:
         comprehensive,
         media,
         json,
-        translate
+        translate,
     ):
         self.client = client
         self._target = target
@@ -192,7 +192,7 @@ class Group_Chat_Analisys:
                 pass
         return current_entity
 
-    async def looking_for_members(self,_target):
+    async def looking_for_members(self, _target):
         members = []
         members_df = None
         all_participants = await self.client.get_participants(_target, limit=5000)
@@ -458,7 +458,11 @@ class Group_Chat_Analisys:
 
         if self.comp_check:
             self.file_archive = create_file_report(
-                self.save_directory, self._alphanumeric, "archive", "csv", self._filetime
+                self.save_directory,
+                self._alphanumeric,
+                "archive",
+                "csv",
+                self._filetime,
             )
             self.reply_file_archive = create_file_report(
                 self.save_directory,
@@ -482,7 +486,11 @@ class Group_Chat_Analisys:
                 os.path.join(self.save_directory, "edgelist")
             )
             self.file_forwards = create_file_report(
-                self.forward_directory, self._alphanumeric, "edgelist", "csv", self._filetime
+                self.forward_directory,
+                self._alphanumeric,
+                "edgelist",
+                "csv",
+                self._filetime,
             )
             self.edgelist_file = create_file_report(
                 self.forward_directory,
@@ -670,11 +678,11 @@ class Group_Chat_Analisys:
             except AttributeError:
                 pass
 
-    async def retrieve_self_history(self,_target=None):
-        cc=False
+    async def retrieve_self_history(self, _target=None):
+        cc = False
         if not _target:
             _target = self._target
-            cc=True
+            cc = True
         _target = clean_private_invite(_target)
         await self.retrieve_chat_group_entity(_target)
 
@@ -686,7 +694,7 @@ class Group_Chat_Analisys:
             limit=1,
             max_id=0,
             min_id=0,
-            hash=0
+            hash=0,
         )
         history = await self.client(get_history)
         if isinstance(history, Messages):
@@ -700,7 +708,6 @@ class Group_Chat_Analisys:
             return None, None
         else:
             return history, count
-
 
     async def process_group_channel_messages(self, _target):
         if self.forwards_check is True and self.comp_check is False:
@@ -871,7 +878,12 @@ class Group_Chat_Analisys:
                 forwards_list = []
                 replies_list = []
                 user_replier_list = []
-                forward_count, private_count, message_count = 0, 0, 0
+                forward_count, private_count, message_count, total_reactions = (
+                    0,
+                    0,
+                    0,
+                    0,
+                )
 
                 if self.media_archive is True:
                     print("\n")
@@ -1093,11 +1105,9 @@ class Group_Chat_Analisys:
                                 else:
                                     views = "N/A"
 
-                                if message.reactions:
-                                    (
-                                        total_reactions,
-                                        reaction_detail,
-                                    ) = evaluate_reactions(message)
+                                total_reactions, reaction_detail = evaluate_reactions(
+                                    message
+                                )
 
                                 if self.media_archive:
                                     if message.media is not None:
@@ -1539,7 +1549,6 @@ class Telepathy_cli:
     target_type = None
     export = False
 
-
     def __init__(
         self,
         target,
@@ -1608,18 +1617,19 @@ class Telepathy_cli:
                 self.telepathy_file, self.config_p["telepathy"]["export_file"]
             )
         else:
-            self.telepathy_file = os.path.join("..","src","telepathy","telepathy_files")
-            self.json_file = os.path.join(self.telepathy_file,"json_files")
-            self.login = os.path.join(self.telepathy_file,"login.txt")
-            self.log_file = os.path.join(self.telepathy_file,"log.csv")
-            self.export_file = os.path.join(self.telepathy_file,"export.csv")
+            self.telepathy_file = os.path.join(
+                "..", "src", "telepathy", "telepathy_files"
+            )
+            self.json_file = os.path.join(self.telepathy_file, "json_files")
+            self.login = os.path.join(self.telepathy_file, "login.txt")
+            self.log_file = os.path.join(self.telepathy_file, "log.csv")
+            self.export_file = os.path.join(self.telepathy_file, "export.csv")
         self.create_path(self.telepathy_file)
-        self.overlaps_dir = os.path.join(self.telepathy_file,"overlaps")
+        self.overlaps_dir = os.path.join(self.telepathy_file, "overlaps")
         self.bots_dir = os.path.join(self.telepathy_file, "bots")
         self.create_path(self.overlaps_dir)
         self.target = target
         self.create_tg_client()
-
 
     @staticmethod
     def create_path(path_d):
@@ -1664,7 +1674,11 @@ class Telepathy_cli:
         else:
             self.api_id, self.api_hash, self.phone_number = self.retrieve_alt()
         """End of API details"""
-        self.client = TelegramClient(os.path.join(self.telepathy_file,"{}.session".format(self.phone_number)), self.api_id, self.api_hash)
+        self.client = TelegramClient(
+            os.path.join(self.telepathy_file, "{}.session".format(self.phone_number)),
+            self.api_id,
+            self.api_hash,
+        )
 
     async def connect_tg_client_and_run(self):
         await self.client.connect()
@@ -1843,7 +1857,7 @@ class Telepathy_cli:
         bot_me = bot_info.get_me()
         user = await bot_info(GetFullUserRequest(bot_me))
         user_info = user.user.to_dict()
-        user_info['token'] = self.bot
+        user_info["token"] = self.bot
 
         bot_obj = createPlaceholdeCls()
         bot_obj.id = bot_me.id
@@ -1854,37 +1868,42 @@ class Telepathy_cli:
         bot_obj.user_first_name = bot_me.user_first_name
 
         ###TODO FIX TYPE, TEST, SAVEFILE EXPLORE/DUMP  CHAT HISTORY
-        print_shell("bot",bot_obj )
+        print_shell("bot", bot_obj)
 
     @staticmethod
     def reiterate_overlaps(dp, dp2, join):
-        return pd.merge(dp,dp2,on=join)
+        return pd.merge(dp, dp2, on=join)
+
     async def telepangulate(self):
         current_set = None
         filename = "overlaps_"
-        if len(self.target)>1:
+        if len(self.target) > 1:
             group_processor = Group_Chat_Analisys(
-                    self.target[0],
-                    self.client,
-                    self.log_file,
-                    self.filetime,
-                    self.reply_analysis,
-                    self.forwards_check,
-                    self.comp_check,
-                    self.media_archive,
-                    self.json_check,
-                    self.translate_check,
-                )
-            pd_members, = group_processor.looking_for_members()
-            filename = filename+"_"+self.target[0]
+                self.target[0],
+                self.client,
+                self.log_file,
+                self.filetime,
+                self.reply_analysis,
+                self.forwards_check,
+                self.comp_check,
+                self.media_archive,
+                self.json_check,
+                self.translate_check,
+            )
+            (pd_members,) = group_processor.looking_for_members()
+            filename = filename + "_" + self.target[0]
             for _t, i in self.target:
-                filename = filename +"_"+ _t
+                filename = filename + "_" + _t
                 dp_t = group_processor.looking_for_members(_t)
                 if i == 1:
-                    current_set = pd.merge(pd_members,dp_t, how="inner", on=["User ID"])
+                    current_set = pd.merge(
+                        pd_members, dp_t, how="inner", on=["User ID"]
+                    )
                 elif i > 1:
-                    current_set = pd.merge(current_set,dp_t, how="inner", on=["User ID"])
-        if(current_set):
+                    current_set = pd.merge(
+                        current_set, dp_t, how="inner", on=["User ID"]
+                    )
+        if current_set:
             filename = filename + ".csv"
             current_set.to_csv(os.path.join(self.overlaps_dir, filename), sep=";")
 

@@ -146,12 +146,15 @@ def parse_html_page(url):
     except:
         name = "Not found"
     try:
-        group_description = soup.find("div", {"class": ["tgme_page_description"]}).text
-        descript = Fore.GREEN + "Description: " + Style.RESET_ALL + group_description
+        group_description = (
+            soup.find("div", {"class": ["tgme_page_description"]})
+            .getText(separator="\n")
+            .replace("\n", " ")
+        )
+        # descript = Fore.GREEN + "Description: " + Style.RESET_ALL + group_description
     except:
         group_description = "None"
-        descript = Fore.GREEN + "Description: " + Style.RESET_ALL + group_description
-
+        # descript = Fore.GREEN + "Description: " + Style.RESET_ALL + group_description
     try:
         group_participants = soup.find("div", {"class": ["tgme_page_extra"]}).text
         sep = "members"
@@ -335,10 +338,11 @@ def clean_private_invite(url):
         return url.replace("https://t.me/+", "https://t.me/joinchat/")
     return url
 
-def evaluate_reactions(message):
+
+def evaluate_reactions(message, create=False):
     total_reactions = 0
     reactions = {}
-    if message.reactions:
+    if not create and message.reactions:
         reactions_l = message.reactions.results
         for idx, i in enumerate(reactions_l):
             total_reactions = total_reactions + i.count
