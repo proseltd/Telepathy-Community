@@ -801,7 +801,7 @@ class Group_Chat_Analisys:
                         with open(
                             self.edgelist_file, "w+", encoding="utf-8"
                         ) as save_forwards:
-                            forwards_df.to_csv(save_forwards, sep=";")
+                            forwards_df.to_csv(save_forwards, sep=";", index=False) # missing index=False (Gephi issue)
 
                         if self.json_check:
                             forwards_df.to_json(
