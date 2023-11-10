@@ -1,4 +1,4 @@
-Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.3.2.
+## Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.3.2.
 
 Telepathy has been described as the "swiss army knife of Telegram tools," allowing OSINT analysts, researchers and digital investigators to archive Telegram chats (including replies, media content, comments and reactions), gather memberlists, lookup users by given location, analyze top posters in a chat, map forwarded messages, and more.
 
