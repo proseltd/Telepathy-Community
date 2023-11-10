@@ -5,10 +5,8 @@ Telepathy has been described as the "swiss army knife of Telegram tools," allowi
 The toolkit has already seen a wide variety of use cases, including but not limited to: in investigative and data journalism, by academic and research institutions, and for intelligence gathering and analysis.
 
 
-## !! IMPORTANT: 
-With the update to 2.3.0, you will need to delete your login.txt file to prevent errors if using the alternative login feature. Upon first use, Telepathy will guide you through setup of the details once again. To work around this, instead of deleting and recreating the file, you can add a newline character to the end of your current API details to ensure Telepathy scans the file correctly.
-
-A note on unique identifiers per account: You will notice that depending on which alternative account you use, the access hash will vary. The same will happen with User IDs, which are unique to each Telegram account accessing them. For deeper data analysis based on user IDs, this is important to bare in mind as users will have as many unique IDs as accounts you've used to access information. In future, Telepathy may include a feature to assign unique identifier per account found based on a hash of the available information, regardless of which account accessed the data.
+## Are you looking for a enterprise-grade version of Telepathy?
+Visit [prose.ltd](https://prose.ltd) to find out how we can turbocharge your Telegram data collection with Telepathy Pro. No accounts, dealing with the command line, or hassle needed!
 
 
 
@@ -173,37 +171,22 @@ In some environments (particularly Windows), Telepathy struggles to effectively 
 Upcoming features include:
 
   - [ ] Adding a time specification flag to set archiving for specific period.
-  - [x] The ability to gather the number of reactions to messages, including statistics on engagement rate.
-  - [ ] Finding a method to once again gather complete memberlists (currently restricted by the API).
-  - [ ] Improved statistics: including timestamp analysis for channels.
-  - [ ] Generating an entirely automated complete report, including visualisation for some statistics.
-  - [ ] Hate speech analytics.
-  - [ ] Include sockpuppet account provisioning (creation of accounts from previous exported lists).
-  - [ ] Listing who has group admin rights in memberlists.
-  - [ ] Media downloaded in the background to increase efficiency or progress bars for media downloads to give a better estimation of runtime.
-  - [x] When media archiving is flagged, the location of downloaded content will be added to the archive file.
-  - [ ] Exploring, and potentially integrating, media cross-checks based on https://github.com/conflict-investigations/media-search-engine.
+  - [ ] A new method to once again gather complete memberlists (currently restricted by the API).
   - [ ] Ensuring inferred channel memberlists don't contain duplicate entries.
-  - [ ] Introducing local chat retrival within the location lookup module.
-  - [x] Further code refactoring to ensure long-term maintainability.
-  - [x] Adding additional alternative logins.
-  - [ ] Improved language support.
-  - [ ] Correctly define destinction between reply (as in a chat) and comment (as in channel).
   - [ ] Exploration of whether channel events can be included, such as name changes.
-  - [x] Including last seen on user lookup.
 
 ## feedback
 
-Please send feedback to @jordanwildon on Twitter. You can follow Telepathy updates at @TelepathyDB.
+Please send feedback to @jordanwildon on Twitter. You can follow Telepathy updates at @proseltd.
 
 
 ## Usage terms
 
-You may use Telepathy however you like, but your usecase is your responsibility. Be safe and respectful.
+You may use Telepathy however you like, but your usecase is your responsibility. Be safe and respectful. If your usecase is for commercial purposes, please consider cour enterprise options at [prose.ltd](https://prose.ltd)
 
 
 ## Credits
 
 All tools created by Jordan Wildon (@jordanwildon). Special thanks go to [Giacomo Giallombardo](https://github.com/aaarghhh) for adding additional features and code refactoring, [jkctech](https://github.com/jkctech/Telegram-Trilateration) for collaboration on location lookup via the 'People Near Me' feature, and Alex Newhouse (@AlexBNewhouse) for his help with Telepathy v1. Shoutout also to [Francesco Poldi](https://github.com/pielco11) for being a sounding board and offering help and advice when it comes to bug fixes.
 
-Where possible, credit for the use of this tool in published research is desired, but not required. This can either come in the form of crediting the author, or crediting Telepathy itself (preferably with a link).
+Where possible, credit for the use of this tool in published research is desired, but not required. This can either come in the form of crediting Jordan Wildon, Prose Intelligence, or crediting Telepathy itself.
