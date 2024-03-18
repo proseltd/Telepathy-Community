@@ -15,7 +15,7 @@ setup(
     install_requires=[
         'click ~= 7.1.2',
         'telethon == 1.25.2',
-        'pandas == 1.4.2',
+        'pandas',
         'colorama ~= 0.4.3',
         'alive_progress == 2.4.1',
         'beautifulsoup4 == 4.11.1',
