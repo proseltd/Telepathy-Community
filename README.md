@@ -1,4 +1,4 @@
-## Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.3.2.
+## Telepathy: An OSINT toolkit for investigating Telegram chats. Developed by Jordan Wildon. Version 2.3.4.
 
 Telepathy has been described as the "swiss army knife of Telegram tools," allowing OSINT analysts, researchers and digital investigators to archive Telegram chats (including replies, media content, comments and reactions), gather memberlists, lookup users by given location, analyze top posters in a chat, map forwarded messages, and more.
 
@@ -105,7 +105,7 @@ $ telepathy -t @test_user -u
 
 - **'--location', '-l']**
 
-Finds users near to specified coordinates. Input should be longitude followed by latitude, seperated by a comma. This feature only works if your Telegram account has a profile image which is set to be publicly viewable.
+Finds users near to specified coordinates. Input should be longitude followed by latitude, seperated by a comma. This feature only works if your Telegram account has a profile image which is set to be publicly viewable. As of 2.3.4, this feature now includes channel lookups. 
 
 While searches for multiple locations at once may work in some cases, Telegram appears to have a limit on how quickly an account can cycle through locations. At the time of writing, this appears to be at least ten minutes. Further location scanning support while using multiple accounts is being explored for a future release.
 
