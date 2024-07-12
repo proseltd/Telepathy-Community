@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="telepathy",
-    version='2.3.2',
+    version='2.3.4',
     author='Jordan Wildon',
     author_email='j.wildon@pm.me',
     packages=['telepathy'],
@@ -14,7 +14,7 @@ setup(
     long_description_content_type='text/markdown',
     install_requires=[
         'click ~= 7.1.2',
-        'telethon == 1.25.2',
+        'telethon == 1.36.0',
         'pandas',
         'colorama ~= 0.4.3',
         'alive_progress == 2.4.1',
