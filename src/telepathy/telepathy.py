@@ -1740,131 +1740,186 @@ class Telepathy_cli:
                     )
                     await group_channel.analyze_group_channel()
 
-    async def analyze_location(self, _target):
-        print(
-            Fore.GREEN
-            + " [!] "
-            + Style.RESET_ALL
-            + "Searching for users near "
-            + _target
-            + "\n"
+    class PlaceholderClass:
+    def __init__(self):
+        self.d500 = 0
+        self.d1000 = 0
+        self.d2000 = 0
+        self.d3000 = 0
+        self.save_file = ""
+        self.total = 0
+
+async def analyze_location(self, _target):
+    print(
+        Fore.GREEN
+        + " [!] "
+        + Style.RESET_ALL
+        + "Searching for users near "
+        + _target
+        + "\n"
+    )
+
+    latitude, longitude = map(float, _target.split(','))
+
+    locations_file = self.create_path(
+        os.path.join(self.telepathy_file, self.config_p["telepathy"]["location"])
+    )
+    save_file = (
+        locations_file
+        + f"{latitude}_{longitude}_locations_{self.filetime_clean}.csv"
+    )
+
+    locations_list = []
+    l_save_list = []
+
+    result = await self.client(
+        functions.contacts.GetLocatedRequest(
+            geo_point=types.InputGeoPoint(
+                lat=latitude,
+                long=longitude,
+                accuracy_radius=42,
+            ),
+            self_expires=42,
         )
+    )
 
-        latitude, longitude = _target.split(sep=",")
+    for user in result.updates[0].peers:
+        try:
+            ID = 0
+            distance = 0
+            if hasattr(user, "peer"):
+                ID = user.peer.user_id
 
-        locations_file = self.create_path(
-            os.path.join(self.telepathy_file, self.config_p["telepathy"]["location"])
-        )
-        save_file = (
-            locations_file
-            + latitude
-            + "_"
-            + longitude
-            + "_"
-            + "locations_"
-            + self.filetime_clean
-            + ".csv"
-        )
+            if hasattr(user, "distance"):
+                distance = user.distance
 
-        locations_list = []
-        l_save_list = []
+            locations_list.append([ID, distance])
+            l_save_list.append([ID, distance, latitude, longitude, self.filetime])
+        except:
+            pass
 
-        result = await self.client(
-            functions.contacts.GetLocatedRequest(
-                geo_point=types.InputGeoPoint(
-                    lat=float(latitude),
-                    long=float(longitude),
-                    accuracy_radius=42,
-                ),
-                self_expires=42,
-            )
-        )
+    user_df = pd.DataFrame(locations_list, columns=["User_ID", "Distance"])
 
-        user_df = pd.DataFrame(locations_list, columns=["User_ID", "Distance"])
+    l_save_df = pd.DataFrame(
+        l_save_list,
+        columns=["User_ID", "Distance", "Latitude", "Longitude", "Date_retrieved"],
+    )
 
-        l_save_df = pd.DataFrame(
-            l_save_list,
-            columns=["User_ID", "Distance", "Latitude", "Longitude", "Date_retrieved"],
-        )
+    distance_obj = PlaceholderClass()
 
-        for user in result.updates[0].peers:
-            try:
-                ID = 0
-                distance = 0
-                if hasattr(user, "peer"):
-                    ID = user.peer.user_id
+    for account, distance in user_df.itertuples(index=False):
+        account = int(account)
+        my_user = await self.client.get_entity(types.PeerUser(account))
+        user_id = my_user.id
+        distance = int(distance)
 
-                if hasattr(user, "distance"):
-                    distance = user.distance
+        if distance == 500:
+            distance_obj.d500 += 1
+        elif distance == 1000:
+            distance_obj.d1000 += 1
+        elif distance == 2000:
+            distance_obj.d2000 += 1
+        elif distance == 3000:
+            distance_obj.d3000 += 1
 
-                locations_list.append([ID, distance])
-                l_save_list.append([ID, distance, latitude, longitude, self.filetime])
-            except:
-                pass
+    with open(save_file, "w+", encoding="utf-8") as f:
+        l_save_df.to_csv(f, sep=";", index=False)
+    
+    total = len(locations_list)
+    distance_obj.save_file = save_file
+    distance_obj.total = total
+    print_shell("location_report", distance_obj)
 
-        distance_obj = createPlaceholdeCls()
-        distance_obj.d500 = 0
-        distance_obj.d1000 = 0
-        distance_obj.d2000 = 0
-        distance_obj.d3000 = 0
+    # Display user and channel information
+    current_time = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-        for account, distance in user_df.itertuples(index=False):
-            account = int(account)
-            my_user = await self.client.get_entity(PeerUser(account))
-            user_id = my_user.id
-            distance = int(distance)
+    for user in result.users:
+        name = str(user.first_name) + (" " + str(user.last_name) if user.last_name else "")
+        user_status = "Not found"
+        last_seen = ""
 
-            if distance == 500:
-                distance_obj.d500 += 1
-            elif distance == 1000:
-                distance_obj.d1000 += 1
-            elif distance == 2000:
-                distance_obj.d2000 += 1
-            elif distance == 3000:
-                distance_obj.d3000 += 1
-        with open(save_file, "w+", encoding="utf-8") as f:
-            l_save_df.to_csv(f, sep=";", index=False)
-        total = len(locations_list)
-        distance_obj.save_file = save_file
-        distance_obj.total = total
-        print_shell("location_report", distance_obj)
+        if user.status is not None:
+            if isinstance(user.status, types.UserStatusRecently):
+                user_status = "Recently (within two days)"
+            elif isinstance(user.status, types.UserStatusOffline):
+                last_seen = user.status.was_online.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+                user_status = "Offline"
+            elif isinstance(user.status, types.UserStatusOnline):
+                user_status = "Online"
+            elif isinstance(user.status, types.UserStatusLastMonth):
+                user_status = "Between a week and a month"
+            elif isinstance(user.status, types.UserStatusLastWeek):
+                user_status = "Between three and seven days"
+            elif isinstance(user.status, types.UserStatusEmpty):
+                user_status = "Not found"
 
-    async def analyze_bot(self):
-        if ":" in self.bot:
-            _bot_id = self.bot.split(":")[0]
-            _bot_hash = self.bot.split(":")[1]
-        else:
-            color_print_green(
-                " [!] ",
-                "The bot_id:bot_hash isn't valid. Pls insert a valid bot_id:bot_hash",
-            )
+        distance = -1
+        for peer in result.updates[0].peers:
+            if not isinstance(peer, types.PeerLocated):
+                continue
+            if peer.peer.user_id == user.id:
+                distance = peer.distance
+                break
 
-        print(
-            Fore.GREEN
-            + " [!] "
-            + Style.RESET_ALL
-            + "Searching info about this bot id: "
-            + _bot_id
-            + "\n"
-        )
+        if distance != -1:
+            user_record = {
+                "user_id": user.id,
+                "name": name,
+                "username": user.username if user.username else "",
+                "distance": f"{distance}m",
+                "phone_number": user.phone,
+                "access_hash": user.access_hash,
+                "latitude": latitude,
+                "longitude": longitude,
+                "retrieval_time": current_time,
+                "last_seen": user_status,
+            }
 
-        bot_info = await self.client().start(bot_token=self.bot)
-        bot_me = bot_info.get_me()
-        user = await bot_info(GetFullUserRequest(bot_me))
-        user_info = user.user.to_dict()
-        user_info["token"] = self.bot
+            for key, value in user_record.items():
+                print(f"{key}: {value}")
+            print()  # Blank line for readability
 
-        bot_obj = createPlaceholdeCls()
-        bot_obj.id = bot_me.id
-        bot_obj.first_name = bot_me.first_name
-        bot_obj.username = bot_me.username
-        bot_obj.user_id = user.user.id
-        bot_obj.user_username = user.user.username
-        bot_obj.user_first_name = bot_me.user_first_name
+    for channel in result.chats:
+        name = channel.title
+        date = channel.date.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        channel_username = channel.username if channel.username else None
 
-        ###TODO FIX TYPE, TEST, SAVEFILE EXPLORE/DUMP  CHAT HISTORY
-        print_shell("bot", bot_obj)
+        group_status = "None"
+        if channel.restriction_reason is not None:
+            restrictions = channel.restriction_reason
+            ios = android = None
+            for restriction in restrictions:
+                if restriction.platform == 'android':
+                    android = f"restricted on Android due to {restriction.reason}"
+                if restriction.platform == 'ios':
+                    ios = f"restricted on iOS due to {restriction.reason}"
 
+            if ios and android:
+                group_status = f"{ios} and {android}"
+            elif android:
+                group_status = android
+            elif ios:
+                group_status = ios
+
+        coordinates = f"{latitude}, {longitude}"
+        url = f"https://t.me/{channel_username}" if channel_username else None
+
+        channel_record = {
+            "channel_id": channel.id,
+            "name": name,
+            "username": channel_username if channel_username else "",
+            "access_hash": channel.access_hash,
+            "participants_count": channel.participants_count,
+            "restrictions": group_status,
+            "latitude": latitude,
+            "longitude": longitude,
+            "url": url,
+            "retrieval_time": current_time
+        }
+
+        for key, value in channel_record.items():
+            print(f"{key}: {value}")
+        print()  # Blank line for readability
     @staticmethod
     def reiterate_overlaps(dp, dp2, join):
         return pd.merge(dp, dp2, on=join)
