@@ -1920,9 +1920,6 @@ async def analyze_location(self, _target):
         for key, value in channel_record.items():
             print(f"{key}: {value}")
         print()  # Blank line for readability
-    @staticmethod
-    def reiterate_overlaps(dp, dp2, join):
-        return pd.merge(dp, dp2, on=join)
 
     async def telepangulate(self):
         current_set = None
